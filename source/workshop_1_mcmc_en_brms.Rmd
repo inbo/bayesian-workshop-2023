@@ -117,7 +117,7 @@ thinning <- 1          # verdunningsfactor (hier 1 =geen verdunning)
 
 $$
 Y \sim Pois(\beta_0 + \beta_1X_{habitat})\\
-\Rightarrow \ln(Y) = \beta_0 + \beta_1X_{habitat}
+\Rightarrow \ln(E(Y)) = \beta_0 + \beta_1X_{habitat}
 $$
 
 ```{r}
@@ -305,4 +305,26 @@ hyp
 
 ```{r}
 plot(hyp)
+```
+
+We sorteren de random effecten van de sites.
+
+```{r}
+# Get mean of sd of random effects 
+sd_mean <- fit2 %>%
+  spread_draws(sd_site__Intercept, ndraws = 1000, seed = 123) %>%
+  summarise(mean_sd = mean(sd_site__Intercept)) %>%
+  pull()
+
+# Get random effects and plot
+fit2 %>%
+  spread_draws(r_site[site,], ndraws = 1000, seed = 123) %>%
+  ungroup() %>%
+  mutate(site = reorder(site, r_site)) %>%
+  ggplot(aes(x = r_site, y = site)) +
+    geom_vline(xintercept = 0, color = "darkgrey", linewidth = 1) +
+    geom_vline(xintercept = c(sd_mean * qnorm(0.025), sd_mean * qnorm(0.975)),
+               color = "darkgrey", linetype = 2) +
+    stat_halfeye(point_interval = "median_qi", .width = 0.9, size = 2/3,
+                 fill = "cornflowerblue")
 ```
