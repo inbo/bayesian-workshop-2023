@@ -5,7 +5,7 @@ author: "Raïsa Carmen, Ward Langeraert & Toon Van Daele"
 date: "`r Sys.Date()`"
 output:
   bookdown::html_document2:
-    code_folding: hide
+    code_folding: show
     toc: true
     toc_float: true
     toc_collapsed: true
@@ -18,7 +18,7 @@ editor_options:
 library(knitr)
 library(here)
 opts_chunk$set(
-  echo = FALSE,
+  echo = TRUE,
   message = FALSE,
   warning = FALSE)
 opts_knit$set(root.dir = here())
@@ -54,8 +54,8 @@ data(ants)
 
 # Maak kopie met kolomnamen in kleine letter
 ants_df <- ants %>%
-  rename(sp_rich = Srich)
-names(ants_df) <- tolower(names(ants_df))
+  rename(sp_rich = Srich) %>%
+  rename_with(tolower)
 
 # Hoe zien de data eruit?
 glimpse(ants_df)
