@@ -289,7 +289,7 @@ plot_df %>%
 ```
 
 We zien een duidelijk verschil in aantal soorten tussen beide habitats.
-Is er een verschil tussen het aantal soorten in moerassen en bossen?
+Is er een significant verschil tussen het aantal soorten in moerassen en bossen?
 We testen de hypothese
 
 $$
