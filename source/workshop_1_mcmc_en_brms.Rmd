@@ -35,3 +35,58 @@ library(tidybayes) # nabewerking en visualisatie van Bayesiaanse modellen
 # Conflicten
 conflicted::conflict_prefer("rhat", "brms")
 ```
+
+# Dataset
+
+We laden de data in.
+Het gaat om het aantal mierensoorten in New England (USA).
+`?ants`
+
+```{r}
+# Laad dataset in
+data(ants)
+
+# Maak kopie met colomnamen in kleine letter
+ants_df <- ants %>%
+  rename(sp_rich = Srich)
+names(ants_df) <- tolower(names(ants_df))
+
+# Hoe zien de data eruit?
+glimpse(ants_df)
+```
+
+Enkele samenvattende statistieken:
+
+```{r}
+summary(ants_df)
+```
+
+We visualiseren de data.
+
+```{r}
+ants_df %>%
+  ggplot(aes(x = sp_rich)) +
+    geom_bar() +
+    scale_x_continuous(limits = c(0, NA)) +
+    facet_wrap(~habitat)
+```
+
+```{r}
+ants_df %>%
+  ggplot(aes(y = sp_rich, x = latitude)) +
+    geom_point() +
+    geom_smooth(method = "loess", formula = "y ~ x", colour = "firebrick") +
+    facet_wrap(~habitat)
+```
+
+```{r}
+ants_df %>%
+  ggplot(aes(y = sp_rich, x = elevation)) +
+    geom_point() +
+    geom_smooth(method = "loess", formula = "y ~ x", colour = "firebrick") +
+    facet_wrap(~habitat)
+```
+
+
+
+
