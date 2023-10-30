@@ -26,7 +26,12 @@ opts_knit$set(root.dir = here())
 
 ```{r packages}
 # Packages
-library(tidyverse)
-library(brms)
-library(tidybayes)
+library(GLMsData)  # datasets voor GLMs
+library(tidyverse) # gegevensverwerking en visualisatie
+library(brms)      # fitten van Bayesiaanse modellen
+library(bayesplot) # MCMC visualisatie en posterior predictive checks
+library(tidybayes) # nabewerking en visualisatie van Bayesiaanse modellen
+
+# Conflicten
+conflicted::conflict_prefer("rhat", "brms")
 ```
