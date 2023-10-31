@@ -128,8 +128,118 @@ ants_df %>%
     facet_wrap(~habitat)
 ```
 
+## Een simpel model voor de vergelijking van het aantal soorten tussen habitats
+### Model specificatie
 
-## Een eerste simpel model
+We willen een model waarmee we het verschil kunnen onderzoeken in aantal soorten mieren tussen moeras- en boshabitats.
+Beschouw de responsvariabele $Y$ het aantal mieren $X_{habitat}$ een dummy variabele die gelijk is aan 0 voor moerassen en 1 voor bossen.
+We veronderstellen dat $Y$ een normaal verdeling volgt (dus een lineaire regressie met categorische variabele (= ANOVA))
+
+$$
+Y \sim N(\mu, \sigma^2)
+$$
+
+met
+
+$$
+\mu = \beta_0 + \beta_1X_{habitat}
+$$
+
+We moeten dus drie paramters schatten: $\beta_0$, $\beta_1$ en $\sigma$.
+Hoe specificeren we dit in **brms**?
+
+Eerst en vooral besluiten we welke MCMC parameters we zullen gebruiken.
+Typ `?brm` om te zien wat de standaard instellingen zijn voor deze parameters.
+Aangeraden is om meerdere chains te gebruiken (`nchains`) en deze parallel te laten lopen op verschillende cores van je computer (`nparallel`).
+Aangezien dat dit een relatief simpel model is, hebben we niet veel iteraties nodig en geen verdunning.
+
+```{r}
+# MCMC parameters
+nchains <- 3           # aantal chains
+niter <- 2000          # aantal iteraties (incl. burn-in, zie volgende)
+burnin <- niter / 4    # aantal initiële samples om te verwijderen (= burn-in)
+nparallel <- nchains   # aantal cores voor parallel computing
+thinning <- 1          # verdunningsfactor (hier 1 = geen verdunning)
+```
+
+Het model wordt gefit a.d.h.v. de `brm()` functie.
+De syntax is zeer gelijkaardig als functies die in frequentist statistics worden gebruikt zoals `lm()` en `glm()`.
+
+```{r}
+# Fit Normaal model
+fit_normal1 <- brm(
+  formula = sp_rich ~ habitat, # beschrijving van het model
+  family = gaussian(),         # we gebruiken de Normale verdeling
+  data = ants_df,              # ingeven data
+  chains = nchains,            # MCMC parameters
+  warmup = burnin, 
+  iter = niter,
+  cores = nparallel,
+  thin = thinning,
+  seed = 123)                  # seed voor reproduceerbare uitkomst
+```
+
+Voor we de resultaten bekijken, controleren we eerst of het model goed geconvergeerd is.
+
+### MCMC convergentie
+
+https://mc-stan.org/bayesplot/articles/visual-mcmc-diagnostics.html
+
+https://mc-stan.org/bayesplot/articles/plotting-mcmc-draws.html
+
+```{r}
+color_scheme_set("mix-blue-red")
+```
+
+Wat is een trace plot?
+
+```{r}
+mcmc_trace(fit_normal1, pars = c("b_Intercept", "b_habitatForest"))
+```
+
+Wat is posterior density?
+
+```{r}
+mcmc_dens_overlay(fit_normal1, pars = c("b_Intercept", "b_habitatForest"))
+```
+
+Of eenvoudiger:
+
+```{r}
+plot(fit_normal1)
+```
+
+
+Wat is Rhat?
+
+```{r}
+rhats_fit_normal1 <- rhat(fit_normal1)[c("b_Intercept", "b_habitatForest")]
+mcmc_rhat(rhats_fit_normal1) + yaxis_text(hjust = 1)
+```
+
++ effective sample size
+...
+
+Correlatie?...
+
+```{r}
+mcmc_pairs(fit_normal1, pars = c("b_Intercept", "b_habitatForest"),
+           off_diag_args = list(size = 1.5))
+```
+
+### Model fit
+
+https://mc-stan.org/bayesplot/articles/graphical-ppcs.html
+
+Uitleg posterior predictive check.
+
+```{r}
+pp_check(fit_normal1, type = "dens_overlay_grouped", ndraws = 100, 
+         group = "habitat")
+```
+
+
+## Een simpel model voor de vergelijking van het aantal soorten tussen habitats
 ### Model specificatie
 
 Eerst en vooral specificeren we de MCMC parameters ...
@@ -150,7 +260,7 @@ $$
 
 ```{r}
 # Fit Poisson model
-fit1 <- brm(formula = bf(sp_rich ~ habitat),
+fit_poisson1 <- brm(formula = sp_rich ~ habitat,
             data = ants_df,
             family = poisson(),
             chains = nchains, 
@@ -175,27 +285,27 @@ color_scheme_set("mix-blue-red")
 Wat is een trace plot?
 
 ```{r}
-mcmc_trace(fit1, pars = c("b_Intercept", "b_habitatForest"))
+mcmc_trace(fit_poisson1, pars = c("b_Intercept", "b_habitatForest"))
 ```
 
 Wat is posterior density?
 
 ```{r}
-mcmc_dens_overlay(fit1, pars = c("b_Intercept", "b_habitatForest"))
+mcmc_dens_overlay(fit_poisson1, pars = c("b_Intercept", "b_habitatForest"))
 ```
 
 Of eenvoudiger:
 
 ```{r}
-plot(fit1)
+plot(fit_poisson1)
 ```
 
 
 Wat is Rhat?
 
 ```{r}
-rhats_fit1 <- rhat(fit1)[c("b_Intercept", "b_habitatForest")]
-mcmc_rhat(rhats_fit1) + yaxis_text(hjust = 1)
+rhats_fit_poisson1 <- rhat(fit_poisson1)[c("b_Intercept", "b_habitatForest")]
+mcmc_rhat(rhats_fit_poisson1) + yaxis_text(hjust = 1)
 ```
 
 + effective sample size
@@ -204,7 +314,7 @@ mcmc_rhat(rhats_fit1) + yaxis_text(hjust = 1)
 Correlatie?...
 
 ```{r}
-mcmc_pairs(fit1, pars = c("b_Intercept", "b_habitatForest"),
+mcmc_pairs(fit_poisson1, pars = c("b_Intercept", "b_habitatForest"),
            off_diag_args = list(size = 1.5))
 ```
 
@@ -215,7 +325,7 @@ https://mc-stan.org/bayesplot/articles/graphical-ppcs.html
 Uitleg posterior predictive check.
 
 ```{r}
-pp_check(fit1, type = "dens_overlay_grouped", ndraws = 100, 
+pp_check(fit_poisson1, type = "dens_overlay_grouped", ndraws = 100, 
          group = "habitat")
 ```
 
@@ -223,7 +333,7 @@ pp_check(fit1, type = "dens_overlay_grouped", ndraws = 100,
 ## Model specificatie
 
 ```{r}
-fit2 <- brm(formula = bf(sp_rich ~ habitat + (1|site)),
+fit_poisson2 <- brm(formula = sp_rich ~ habitat + (1|site),
             data = ants_df,
             family = poisson(),
             chains = nchains, 
@@ -237,19 +347,19 @@ fit2 <- brm(formula = bf(sp_rich ~ habitat + (1|site)),
 ## MCMC convergentie
 
 ```{r}
-plot(fit2)
+plot(fit_poisson2)
 ```
 
 ```{r}
 vars <- c("b_Intercept", "b_habitatForest", "sd_site__Intercept")
-rhats_fit2 <- rhat(fit2)[vars]
-mcmc_rhat(rhats_fit2) + yaxis_text(hjust = 1)
+rhats_fit_poisson2 <- rhat(fit_poisson2)[vars]
+mcmc_rhat(rhats_fit_poisson2) + yaxis_text(hjust = 1)
 ```
 
 ## Model fit
 
 ```{r}
-pp_check(fit2, type = "dens_overlay_grouped", ndraws = 100, 
+pp_check(fit_poisson2, type = "dens_overlay_grouped", ndraws = 100, 
          group = "habitat")
 ```
 
@@ -259,11 +369,11 @@ https://mc-stan.org/loo/articles/online-only/faq.html
 
 ```{r}
 # Leave-one-out cross-validation
-fit1 <- add_criterion(fit1, criterion = "loo")
-fit2 <- add_criterion(fit2, criterion = "loo")
+fit_poisson1 <- add_criterion(fit_poisson1, criterion = "loo")
+fit_poisson2 <- add_criterion(fit_poisson2, criterion = "loo")
 
 # Maak vergelijking
-comp <- loo_compare(fit1, fit2, criterion = "loo")
+comp <- loo_compare(fit_poisson1, fit_poisson2, criterion = "loo")
 print(comp, simplify = FALSE, digits = 3)
 ```
 
@@ -282,7 +392,7 @@ comp %>%
 https://mjskay.github.io/tidybayes/articles/tidy-brms.html
 
 ```{r}
-fit2 %>%
+fit_poisson2 %>%
   gather_draws(b_Intercept, b_habitatForest, ndraws = 1000, seed = 123) %>%
   group_by(.variable) %>%
   summarise(min = min(.value),
@@ -299,7 +409,7 @@ We zouden graag het geschatte aantal soorten visualiseren per habitattype.
 Het gemiddeld aantal soorten in moerassen volgens ons model is $\exp(\beta_0)$ en in bossen $\exp(\beta_0+\beta_1)$.
 
 ```{r}
-plot_df <- fit2 %>%
+plot_df <- fit_poisson2 %>%
   spread_draws(b_Intercept, b_habitatForest, ndraws = 1000, seed = 123) %>%
   mutate(bog = exp(b_Intercept),
          forest = exp(b_Intercept + b_habitatForest))
@@ -327,7 +437,7 @@ $$
 $$
 
 ```{r}
-hyp <- hypothesis(fit2, "habitatForest = 0", alpha = 0.05)
+hyp <- hypothesis(fit_poisson2, "habitatForest = 0", alpha = 0.05)
 hyp
 ```
 
@@ -339,13 +449,13 @@ We sorteren de random effecten van de sites.
 
 ```{r}
 # Get mean of sd of random effects 
-sd_mean <- fit2 %>%
+sd_mean <- fit_poisson2 %>%
   spread_draws(sd_site__Intercept, ndraws = 1000, seed = 123) %>%
   summarise(mean_sd = mean(sd_site__Intercept)) %>%
   pull()
 
 # Get random effects and plot
-fit2 %>%
+fit_poisson2 %>%
   spread_draws(r_site[site,], ndraws = 1000, seed = 123) %>%
   ungroup() %>%
   mutate(site = reorder(site, r_site)) %>%
