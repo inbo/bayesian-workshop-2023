@@ -183,92 +183,178 @@ Voor we de resultaten bekijken, controleren we eerst of het model goed geconverg
 
 ### MCMC convergentie
 
-https://mc-stan.org/bayesplot/articles/visual-mcmc-diagnostics.html
+Er zijn verschillende manieren om convergentie van het MCMC algoritme voor elke parameter te te controleren.
+Eerst en vooral heb je visuele controles.
 
-https://mc-stan.org/bayesplot/articles/plotting-mcmc-draws.html
+We kunnen de MCMC samples met de `as_draws()` functies verkrijgen ofwel via de [bayesplot](https://mc-stan.org/bayesplot/) package die compatibel is met brmsfit objecten.
 
 ```{r}
+# Zet kleurenpallet voor duidelijke visualisatie in bayesplot
 color_scheme_set("mix-blue-red")
 ```
 
-Wat is een trace plot?
-
 ```{r}
-mcmc_trace(fit_normal1, pars = c("b_Intercept", "b_habitatForest"))
+# Welke parameters gaan we bekijken?
+parameters <- c("b_Intercept", "b_habitatForest", "sigma")
 ```
 
-Wat is posterior density?
+**trace plot**
+
+> Trace plots geven aan hoe 
 
 ```{r}
-mcmc_dens_overlay(fit_normal1, pars = c("b_Intercept", "b_habitatForest"))
+# Visualisatie door extractie samples met as_draws_df()
+as_draws_df(fit_normal1, variable = parameters) %>%
+  pivot_longer(cols = all_of(parameters), names_to = "parameter",
+               values_to = "value") %>%
+  ggplot(aes(y = value, x = .iteration, colour = factor(.chain))) +
+    geom_line() +
+    facet_wrap(~parameter, nrow = 3, scales = "free")
 ```
 
-Of eenvoudiger:
+```{r}
+# Visualisatie via Bayesplot package
+mcmc_trace(fit_normal1, pars = parameters)
+```
+
+**running mean/quantile/... plot**
+
+Gelijkaardig als een trace plot kunnen we ook kijken hoe bepaalde statistieken zoals het gemiddelde of de quantielen zich voordoen naarmate het aantal iteraties toeneemt.
+
+```{r}
+# code om cumulatieve quantielen te berekenen
+# bron: https://rdrr.io/cran/cumstats/src/R/cumquant.R
+cumquant <- function(x, p){
+  out <- sapply(seq_along(x),
+                function(k, z) quantile(z[1:k], probs = p[1], names = FALSE),
+                z = x)
+  return(out)
+}
+```
+
+```{r}
+as_draws_df(fit_normal1, variable = parameters) %>%
+  mutate(across(all_of(parameters), ~cummean(.x),
+                .names = "{.col}_cummean"),
+         across(all_of(parameters), ~cumquant(.x, 0.1),
+                .names = "{.col}_q10"),
+         across(all_of(parameters), ~cumquant(.x, 0.9),
+                .names = "{.col}_q90")) %>%
+  select(-all_of(parameters)) %>%
+  pivot_longer(cols = starts_with(parameters), names_to = "name",
+               values_to = "value") %>%
+  extract(name, into = c("parameter", "statistiek"), "(.*)_([^_]+)$") %>%
+  ggplot(aes(y = value, x = .iteration, colour = factor(.chain))) +
+    geom_line(aes(linetype = statistiek), linewidth = 0.8) +
+    facet_wrap(~parameter, nrow = 3, scales = "free")
+```
+
+
+> uitleg Wat is posterior density?
+
+```{r}
+mcmc_dens_overlay(fit_normal1, pars = parameters)
+```
+
+Nog eenvoudiger is de `plot()` functie gebruiken op het brmsfit object.
 
 ```{r}
 plot(fit_normal1)
 ```
 
-
-Wat is Rhat?
+> uitleg Wat is autocorrelatie?
 
 ```{r}
-rhats_fit_normal1 <- rhat(fit_normal1)[c("b_Intercept", "b_habitatForest")]
+mcmc_acf(fit_normal1, pars = parameters)
+```
+
+Andere packages die van pas kunnen komen zijn [mcmcplots](https://cran.r-project.org/web/packages/mcmcplots/index.html) en [coda](https://cran.r-project.org/web/packages/coda/index.html).
+Voor deze packages moet je de MCMC samples wel eerst omzetten naar een mcmc object.
+
+```
+# voorbeeld
+install.packages(mcmcplots)
+mcmcplots::mcmcplot(as.mcmc(fit_normal1, pars = parameters))
+```
+
+> uitleg Wat is cross-correlatie?
+
+```{r}
+mcmc_pairs(fit_normal1, pars = parameters,
+           off_diag_args = list(size = 1.5))
+```
+
+Naast visuele checks zijn er ook diagnostische controles.
+
+**Gelman-Rubin diagnostic**
+
+Ook wel $\hat{R}$ (R-hat) of potential scale reduction factor genoemd.
+Eén manier om te controleren of een chain is geconvergeerd, is door zijn gedrag te vergelijken met andere willekeurig geïnitialiseerde ketens.
+De $\hat{R}$ statistiek neemt de verhouding van de gemiddelde variantie van samples binnen elke chain tot de variantie van de gepoolde samples over alle chains heen.
+Als alle ketens convergeren naar een gemeenschappelijke distributie, zullen deze verhoudingen één zijn. Als de ketens niet zijn geconvergeerd naar een gemeenschappelijke verdeling, zal de $\hat{R}$ statistiek groter zijn dan één.
+We kunnen de $\hat{R}$ statistieken extraheren via de `rhat()` functie en dan eventueel visualiseren met de `mcmc_rhat()` functie van de **bayesplot** package.
+
+```{r}
+rhats_fit_normal1 <- rhat(fit_normal1)[parameters]
 mcmc_rhat(rhats_fit_normal1) + yaxis_text(hjust = 1)
 ```
 
-+ effective sample size
-...
+**effective sample size**
 
-Correlatie?...
+De effective sample size ($n_{eff}$) is een schatting van het aantal onafhankelijke trekkingen van de posterior distribution van elke parameter. Omdat de trekkingen binnen een Markov chain niet onafhankelijk zijn als er sprake is van autocorrelatie, is de effective sample size gewoonlijk kleiner dan de totale steekproefomvang, namelijk het aantal iteraties ($N$). Hoe groter de verhouding $n_{eff}/N$ hoe beter. De **bayesplot** package biedt een `neff_ratio()` extractorfunctie. De `mcmc_neff()` functie kan vervolgens worden gebruikt om de verhoudingen te plotten.
 
 ```{r}
-mcmc_pairs(fit_normal1, pars = c("b_Intercept", "b_habitatForest"),
-           off_diag_args = list(size = 1.5))
+# Krijg verhoudingen
+ratios_fit_normal1 <- neff_ratio(fit_normal1)[parameters]
+print(ratios_fit_normal1)
+```
+
+```{r}
+# Plot verhoudingen
+mcmc_neff(ratios_fit_normal1) + yaxis_text(hjust = 1)
 ```
 
 ### Model fit
 
-https://mc-stan.org/bayesplot/articles/graphical-ppcs.html
-
-Uitleg posterior predictive check.
+De [posterior predictive check](https://mc-stan.org/bayesplot/articles/graphical-ppcs.html) (PPC) is een goede manier om te controleren of het model goed past bij de data.
+Het idee achter de posterior predictive check is dat, als een model goed past, de voorspelde waardes o.b.v. het model veel lijken op de data die we hebben waargenomen (en gebruikt om het model te fitten).
+Om de voorspellingen te genereren die worden gebruikt voor PPCs, simuleren we vanuit de posterior predictive distribution (de posterior distribution van de responsvariabele).
+Visualisatie kan met de **bayesplot** package.
 
 ```{r}
 pp_check(fit_normal1, type = "dens_overlay_grouped", ndraws = 100, 
          group = "habitat")
 ```
 
+We zien dat de overeenkomst tussen de geobserveerde data en de voorspellingen o.b.v. ons model niet helemaal overeenkomen.
+Mogelijks was onze keuze voor de Normaal verdeling niet goed.
+Aantallen zijn discrete, positieve waarden, terwijl de Normaal verdeling continue en zowel positieve als negatieve waarden kan voorspellen.
+De Poisson verdeling is een discrete verdeling die steeds positief is.
+Ze word vaak gebruikt voor het modelleren van aantallen gedurende een gegeven tijdsinterval, afstand, oppervlakte, volume etc.
 
-## Een simpel model voor de vergelijking van het aantal soorten tussen habitats
+## Specificatie van een Poisson model
 ### Model specificatie
-
-Eerst en vooral specificeren we de MCMC parameters ...
-
-```{r}
-# MCMC parameters
-nchains <- 3           # aantal chains
-niter <- 2000          # aantal iteraties (incl. burn-in, zie volgende)
-burnin <- niter / 4    # aantal initiële samples om te verwijderen (= burn-in)
-nparallel <- nchains   # aantal cores voor parallel computing
-thinning <- 1          # verdunningsfactor (hier 1 =geen verdunning)
-```
 
 $$
 Y \sim Pois(\beta_0 + \beta_1X_{habitat})\\
 \Rightarrow \ln(E(Y)) = \beta_0 + \beta_1X_{habitat}
 $$
 
+We gebruiken dezelfde MCMC parameters als voordien.
+Het enige wat we moeten aanpassen is de keuze `family = poisson()`.
+
 ```{r}
 # Fit Poisson model
-fit_poisson1 <- brm(formula = sp_rich ~ habitat,
-            data = ants_df,
-            family = poisson(),
-            chains = nchains, 
-            warmup = burnin, 
-            iter = niter,
-            cores = nparallel,
-            thin = thinning,
-            seed = 123)
+fit_poisson1 <- brm(
+  formula = sp_rich ~ habitat, # beschrijving van het model
+  family = poisson(),          # we gebruiken de Poisson verdeling
+  data = ants_df,              # ingeven data
+  chains = nchains,            # MCMC parameters
+  warmup = burnin, 
+  iter = niter,
+  cores = nparallel,
+  thin = thinning,
+  seed = 123)                  # seed voor reproduceerbare uitkomst
 ```
 
 
