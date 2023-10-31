@@ -87,6 +87,7 @@ summary(ants_df)
 ```
 
 We visualiseren de data.
+
 Frequentie van het aantal soorten per habitat.
 
 ```{r}
@@ -129,13 +130,14 @@ ants_df %>%
 ```
 
 Als oefening zullen we een model maken om het aantal soorten te vergelijken tussen beide habitats.
+Uit de data exploratie zagen we al dat het aantal hoger lijkt te liggen in bossen en dat sites met een hoger aantal in moerassen vaak ook een hoger aantal in bossen hebben.
 
-## Een eerste simpel model
+## Specificatie van een lineaire regressie
 ### Model specificatie
 
 We willen een model waarmee we het verschil kunnen onderzoeken in aantal soorten mieren tussen moeras- en boshabitats.
 Beschouw de responsvariabele $Y$ het aantal mieren $X_{habitat}$ een dummy variabele die gelijk is aan 0 voor moerassen en 1 voor bossen.
-We veronderstellen dat $Y$ een normaal verdeling volgt (dus een lineaire regressie met categorische variabele (= ANOVA))
+We veronderstellen dat $Y$ een Normaal verdeling volgt (equivalent aan een lineaire regressie met categorische variabele (= ANOVA))
 
 $$
 Y \sim N(\mu, \sigma^2)
@@ -147,7 +149,7 @@ $$
 \mu = \beta_0 + \beta_1X_{habitat}
 $$
 
-We moeten dus drie paramters schatten: $\beta_0$, $\beta_1$ en $\sigma$.
+We moeten dus drie parameters schatten: $\beta_0$, $\beta_1$ en $\sigma$.
 Hoe specificeren we dit in **brms**?
 
 Eerst en vooral besluiten we welke MCMC parameters we zullen gebruiken.
@@ -166,12 +168,18 @@ thinning <- 1          # verdunningsfactor (hier 1 = geen verdunning)
 
 Het model wordt gefit a.d.h.v. de `brm()` functie.
 De syntax is zeer gelijkaardig als functies die in frequentist statistics worden gebruikt zoals `lm()` en `glm()`.
+De `brm()` functie bevat heel wat argumenten (zie `?brm`).
+Handige argumenten die we hier niet gebruiken zijn bijvoorbeeld:
+
+-  `inits` om de beginwaarden van MCMC algoritme in te stellen. Indien deze niet gespecificeerd zijn, gebruikt de functie default waarden.
+-  `prior` om prior distributies te voorzien. Indien deze niet gespecificeerd zijn, gebruikt de functie default (niet informatieve) priors. `sample_prior` kan gebruikt worden om van de prior te samplen zodat je kan visualiseren of de gebruikte prior voldoet aan je verwachtingen.
+-  `file` en `file_refit` om het model object op te slaan nadat het gefit is. Als je de code opnieuw runt en het model is al eens opgeslaan, dan zal `brm()` dit model gewoon inladen in plaats van het opnieuw te fitten.
 
 ```{r}
 # Fit Normaal model
 fit_normal1 <- brm(
   formula = sp_rich ~ habitat, # beschrijving van het model
-  family = gaussian(),         # we gebruiken de Normale verdeling
+  family = gaussian(),         # we gebruiken de Normaal verdeling
   data = ants_df,              # ingeven data
   chains = nchains,            # MCMC parameters
   warmup = burnin, 
@@ -185,10 +193,10 @@ Voor we de resultaten bekijken, controleren we eerst of het model goed geconverg
 
 ### MCMC convergentie
 
-Er zijn verschillende manieren om convergentie van het MCMC algoritme voor elke parameter te te controleren.
-Eerst en vooral heb je visuele controles.
+Er zijn verschillende manieren om convergentie van het MCMC algoritme voor elke parameter te controleren.
+Eerst en vooral heb je *visuele controles*.
 
-We kunnen de MCMC samples met de `as_draws()` functies verkrijgen ofwel via de [bayesplot](https://mc-stan.org/bayesplot/) package die compatibel is met brmsfit objecten.
+We kunnen de MCMC samples met de `as_draws()` functies verkrijgen ofwel ineens visualiseren via de [bayesplot](https://mc-stan.org/bayesplot/) package die compatibel is met brmsfit objecten.
 
 ```{r}
 # Zet kleurenpallet voor duidelijke visualisatie in bayesplot
@@ -226,7 +234,7 @@ Gelijkaardig als een trace plot kunnen we ook kijken hoe bepaalde statistieken z
 ```{r}
 # code om cumulatieve quantielen te berekenen
 # bron: https://rdrr.io/cran/cumstats/src/R/cumquant.R
-cumquant <- function(x, p){
+cumquant <- function(x, p) {
   out <- sapply(seq_along(x),
                 function(k, z) quantile(z[1:k], probs = p[1], names = FALSE),
                 z = x)
@@ -251,33 +259,32 @@ as_draws_df(fit_normal1, variable = parameters) %>%
     facet_wrap(~parameter, nrow = 3, scales = "free")
 ```
 
+**posterior density plot**
 
-> uitleg Wat is posterior density?
+De vorm van de posterior distributions kan ook informatief zijn of de chains geconvergeerd zijn naar dezelfde distributies. 
+De vorm kan ook informatief zijn.
+Als er bijvoorbeeld meerdere maxima aanwezig zijn zou er mogelijks ook iets mis kunnen zijn met ons model.
 
 ```{r}
 mcmc_dens_overlay(fit_normal1, pars = parameters)
 ```
 
 Nog eenvoudiger is de `plot()` functie gebruiken op het brmsfit object.
+Deze toont direct de trace plots en de posterior density plots naast elkaar voor elke parameter.
 
 ```{r}
 plot(fit_normal1)
 ```
 
-> uitleg Wat is autocorrelatie?
+**autocorrelation plot**
+
+> uitleg Wat is autocorrelatie? thinning
 
 ```{r}
 mcmc_acf(fit_normal1, pars = parameters)
 ```
 
-Andere packages die van pas kunnen komen zijn [mcmcplots](https://cran.r-project.org/web/packages/mcmcplots/index.html) en [coda](https://cran.r-project.org/web/packages/coda/index.html).
-Voor deze packages moet je de MCMC samples wel eerst omzetten naar een mcmc object.
-
-```
-# voorbeeld
-install.packages(mcmcplots)
-mcmcplots::mcmcplot(as.mcmc(fit_normal1, pars = parameters))
-```
+**cross-correlation plot**
 
 > uitleg Wat is cross-correlatie?
 
@@ -286,18 +293,24 @@ mcmc_pairs(fit_normal1, pars = parameters,
            off_diag_args = list(size = 1.5))
 ```
 
-Naast visuele checks zijn er ook diagnostische controles.
+Naast visuele checks zijn er ook *diagnostische controles*.
 
 **Gelman-Rubin diagnostic**
 
 Ook wel $\hat{R}$ (R-hat) of potential scale reduction factor genoemd.
-Eén manier om te controleren of een chain is geconvergeerd, is door zijn gedrag te vergelijken met andere willekeurig geïnitialiseerde ketens.
+Een manier om te controleren of een chain is geconvergeerd, is door zijn gedrag te vergelijken met andere willekeurig geïnitialiseerde ketens.
 De $\hat{R}$ statistiek neemt de verhouding van de gemiddelde variantie van samples binnen elke chain tot de variantie van de gepoolde samples over alle chains heen.
-Als alle ketens convergeren naar een gemeenschappelijke distributie, zullen deze verhoudingen één zijn. Als de ketens niet zijn geconvergeerd naar een gemeenschappelijke verdeling, zal de $\hat{R}$ statistiek groter zijn dan één.
+Als alle ketens convergeren naar een gemeenschappelijke distributie, zullen deze verhoudingen gelijk aan 1 zijn. Als de ketens niet zijn geconvergeerd naar een gemeenschappelijke verdeling, zal de $\hat{R}$ statistiek groter zijn dan 1.
 We kunnen de $\hat{R}$ statistieken extraheren via de `rhat()` functie en dan eventueel visualiseren met de `mcmc_rhat()` functie van de **bayesplot** package.
 
 ```{r}
+# Krijg R-hats
 rhats_fit_normal1 <- rhat(fit_normal1)[parameters]
+print(rhats_fit_normal1)
+```
+
+```{r}
+# Plot R-hats
 mcmc_rhat(rhats_fit_normal1) + yaxis_text(hjust = 1)
 ```
 
@@ -316,12 +329,26 @@ print(ratios_fit_normal1)
 mcmc_neff(ratios_fit_normal1) + yaxis_text(hjust = 1)
 ```
 
+Andere packages die van pas kunnen komen bij het controleren van MCMC convergentie zijn [mcmcplots](https://cran.r-project.org/web/packages/mcmcplots/index.html) en [coda](https://cran.r-project.org/web/packages/coda/index.html).
+Voor deze packages moet je de MCMC samples wel eerst omzetten naar een mcmc object.
+
+```
+# voorbeeld
+install.packages(mcmcplots)
+mcmcplots::mcmcplot(as.mcmc(fit_normal1, pars = parameters))
+```
+
+We kunnen over het algemeen besluiten dat MCMC convergentie goed is voor alle parameters.
+Indien dit niet het geval zou zijn, kan het zijn dat de MCMC parameters anders moeten gekozen worden, bijvoorbeeld door het aantal iteraties te verhogen.
+Nu we weten dat de parameters correct geschat zijn, kunnen we controleren of het model goed bij de data past.
+
 ### Model fit
 
 De [posterior predictive check](https://mc-stan.org/bayesplot/articles/graphical-ppcs.html) (PPC) is een goede manier om te controleren of het model goed past bij de data.
-Het idee achter de posterior predictive check is dat, als een model goed past, de voorspelde waardes o.b.v. het model veel lijken op de data die we hebben waargenomen (en gebruikt om het model te fitten).
+Het idee achter de PPC is dat, als een model goed past, de voorspelde waardes o.b.v. het model veel lijken op de data die we hebben gebruikt om het model te fitten.
 Om de voorspellingen te genereren die worden gebruikt voor PPCs, simuleren we vanuit de posterior predictive distribution (de posterior distribution van de responsvariabele).
 Visualisatie kan met de **bayesplot** package.
+De dikke lijn geeft de data aan en de dunne lijntjes verschillende simulaties o.b.v. het model.
 
 ```{r}
 pp_check(fit_normal1, type = "dens_overlay_grouped", ndraws = 100, 
@@ -332,7 +359,7 @@ We zien dat de overeenkomst tussen de geobserveerde data en de voorspellingen o.
 Mogelijks was onze keuze voor de Normaal verdeling niet goed.
 Aantallen zijn discrete, positieve waarden, terwijl de Normaal verdeling continue en zowel positieve als negatieve waarden kan voorspellen.
 De Poisson verdeling is een discrete verdeling die steeds positief is.
-Ze word vaak gebruikt voor het modelleren van aantallen gedurende een gegeven tijdsinterval, afstand, oppervlakte, volume etc.
+Ze wordt vaak gebruikt voor het modelleren van geregistreerde aantallen gedurende een gegeven tijdsinterval, afstand, oppervlakte, volume ...
 
 ## Specificatie van een Poisson model
 ### Model specificatie
@@ -349,6 +376,7 @@ $$
 \ln(\lambda) = \beta_0 + \beta_1X_{habitat}
 $$
 
+We moeten dus twee parameters schatten: $\beta_0$ en $\beta_1$ 
 We gebruiken dezelfde MCMC parameters als voordien.
 Het enige wat we moeten aanpassen is de keuze `family = poisson()`.
 
@@ -395,7 +423,27 @@ Hoe kunnen we model fit nog verbeteren?
 We weten dat elke site 2x bezocht is.
 Eenmaal in moeras en eenmaal in bos.
 Het is natuurlijk mogelijk dat het aantal mieren in het moeras en het bos van dezelfde site gecorreleerd zullen zijn (site effect).
+Dit zagen we inderdaad ook in de data exploratie.
+Sites met een hoger aantal soorten in moerassen hebben vaak ook een hoger aantal in bossen en vice versa.
 Hiervoor kunnen we corrigeren door een random intercept voor elke site toe te voegen `... + (1|site)`.
+
+We veronderstellen dat het aantal soorten $Y$ per site $j$ ($j = 1, ..., J$) een Poisson verdeling volgt
+
+$$
+Y_j \sim Pois(\lambda_j)
+$$
+
+zodat
+
+$$
+\ln(\lambda_j) = \beta_0 + \beta_1X_{habitat} + b_{0,j}
+$$
+
+met 
+
+$$
+b_0 \sim N(0, \sigma_b)
+$$
 
 ```{r}
 # Fit Poisson model met random intercepten per site
@@ -418,17 +466,19 @@ plot(fit_poisson2)
 ```
 
 ```{r}
-vars <- c("b_Intercept", "b_habitatForest", "sd_site__Intercept")
-rhats_fit_poisson2 <- rhat(fit_poisson2)[vars]
+parameters2 <- c("b_Intercept", "b_habitatForest", "sd_site__Intercept")
+rhats_fit_poisson2 <- rhat(fit_poisson2)[parameters2]
 mcmc_rhat(rhats_fit_poisson2) + yaxis_text(hjust = 1)
 ```
 
-Model fit lijk nu nog beter.
+Model fit lijkt nu nog beter.
 
 ```{r}
 pp_check(fit_poisson2, type = "dens_overlay_grouped", ndraws = 100, 
          group = "habitat")
 ```
+
+Hoe kunnen we deze modellen nu objectief gaan vergelijken?
 
 # Vergelijken van modellen
 
@@ -526,18 +576,13 @@ Handige functies zijn ook `median_qi()`, `mean_qi()` ...  na `gather_draws()` in
 
 We zouden graag het geschatte aantal soorten visualiseren per habitattype.
 Het gemiddeld aantal soorten in moerassen volgens ons model is $\exp(\beta_0)$ en in bossen $\exp(\beta_0+\beta_1)$.
+We tonen de posterior distributions met de posterior mediaan en 60 en 90 % credible intervals.
 
 ```{r}
-plot_df <- fit_poisson2 %>%
+fit_poisson2 %>%
   spread_draws(b_Intercept, b_habitatForest, ndraws = 1000, seed = 123) %>%
   mutate(bog = exp(b_Intercept),
-         forest = exp(b_Intercept + b_habitatForest))
-```
-
-We tonen ook de posterior mediaan en 60 en 90 % credible interval.
-
-```{r}
-plot_df %>%
+         forest = exp(b_Intercept + b_habitatForest)) %>%
   pivot_longer(cols = c("bog", "forest"), names_to = "habitat", 
                values_to = "sp_rich") %>%
   ggplot(aes(y = sp_rich, x = habitat)) +
