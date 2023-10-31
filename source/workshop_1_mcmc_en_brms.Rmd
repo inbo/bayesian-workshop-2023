@@ -58,17 +58,17 @@ Parallel running
 Stan
 Verschillende regels metropolis-hastings algoritme
 
-# Een model fitten in brms
+# Een model fitten met brms
 ## Dataset laden en data exploratie
 
-We laden een dataset in van het aantal mierensoorten in New England (USA).
+We laden een dataset in over het aantal mierensoorten in New England (USA).
 Typ `?ants` in de console voor meer info.
 
 ```{r}
 # Laad dataset in
 data(ants)
 
-# Maak kopie met kolomnamen in kleine letter
+# Maak kopie met kolomnamen in kleine letters
 ants_df <- ants %>%
   rename(sp_rich = Srich) %>%
   rename_with(tolower)
@@ -77,13 +77,17 @@ ants_df <- ants %>%
 glimpse(ants_df)
 ```
 
-Enkele samenvattende statistieken:
+We hebben een aantal sites (`site`) waar het aantal soorten mieren geteld zijn (`sp_rich`).
+Enkele variabelen zijn aanwezig: `habitat`, `latitude` en hoogte (`elevation`).
+We bekijken enkele samenvattende statistieken.
+In elke site zijn 2 tellingen gedaan: in moeras (`bog`) en in bos (`forest`).
 
 ```{r}
 summary(ants_df)
 ```
 
 We visualiseren de data.
+Frequentie van het aantal soorten per habitat.
 
 ```{r}
 ants_df %>%
@@ -93,12 +97,18 @@ ants_df %>%
     facet_wrap(~habitat)
 ```
 
+Verdeling van het aantal soorten per habitat.
+
 ```{r}
 ants_df %>%
   ggplot(aes(y = sp_rich, x = habitat)) +
     geom_boxplot() +
+    geom_line(aes(colour = site, group = site), alpha = 0.5) +
+    geom_point(aes(colour = site, group = site)) +
     scale_y_continuous(limits = c(0, NA))
 ```
+
+Relatie tussen het aantal soorten en latitude per habitat.
 
 ```{r}
 ants_df %>%
@@ -107,6 +117,8 @@ ants_df %>%
     geom_smooth(method = "loess", formula = "y ~ x", colour = "firebrick") +
     facet_wrap(~habitat)
 ```
+
+Relatie tussen het aantal soorten en hoogte per habitat.
 
 ```{r}
 ants_df %>%
