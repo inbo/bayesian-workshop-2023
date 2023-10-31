@@ -128,7 +128,9 @@ ants_df %>%
     facet_wrap(~habitat)
 ```
 
-## Een simpel model voor de vergelijking van het aantal soorten tussen habitats
+Als oefening zullen we een model maken om het aantal soorten te vergelijken tussen beide habitats.
+
+## Een eerste simpel model
 ### Model specificatie
 
 We willen een model waarmee we het verschil kunnen onderzoeken in aantal soorten mieren tussen moeras- en boshabitats.
@@ -335,9 +337,16 @@ Ze word vaak gebruikt voor het modelleren van aantallen gedurende een gegeven ti
 ## Specificatie van een Poisson model
 ### Model specificatie
 
+We veronderstellen dat $Y$ nu een Poisson verdeling volgt
+
 $$
-Y \sim Pois(\beta_0 + \beta_1X_{habitat})\\
-\Rightarrow \ln(E(Y)) = \beta_0 + \beta_1X_{habitat}
+Y \sim Pois(\lambda)
+$$
+
+met
+
+$$
+\ln(\lambda) = \beta_0 + \beta_1X_{habitat}
 $$
 
 We gebruiken dezelfde MCMC parameters als voordien.
@@ -357,80 +366,52 @@ fit_poisson1 <- brm(
   seed = 123)                  # seed voor reproduceerbare uitkomst
 ```
 
-
 ### MCMC convergentie
 
-https://mc-stan.org/bayesplot/articles/visual-mcmc-diagnostics.html
-
-https://mc-stan.org/bayesplot/articles/plotting-mcmc-draws.html
-
-```{r}
-color_scheme_set("mix-blue-red")
-```
-
-Wat is een trace plot?
-
-```{r}
-mcmc_trace(fit_poisson1, pars = c("b_Intercept", "b_habitatForest"))
-```
-
-Wat is posterior density?
-
-```{r}
-mcmc_dens_overlay(fit_poisson1, pars = c("b_Intercept", "b_habitatForest"))
-```
-
-Of eenvoudiger:
+Convergentie ziet er opnieuw goed uit.
 
 ```{r}
 plot(fit_poisson1)
 ```
-
-
-Wat is Rhat?
 
 ```{r}
 rhats_fit_poisson1 <- rhat(fit_poisson1)[c("b_Intercept", "b_habitatForest")]
 mcmc_rhat(rhats_fit_poisson1) + yaxis_text(hjust = 1)
 ```
 
-+ effective sample size
-...
-
-Correlatie?...
-
-```{r}
-mcmc_pairs(fit_poisson1, pars = c("b_Intercept", "b_habitatForest"),
-           off_diag_args = list(size = 1.5))
-```
-
 ### Model fit
 
-https://mc-stan.org/bayesplot/articles/graphical-ppcs.html
-
-Uitleg posterior predictive check.
+We zien dat alle predicties nu wel positief zijn, maar de fit is nog altijd niet ideaal.
 
 ```{r}
 pp_check(fit_poisson1, type = "dens_overlay_grouped", ndraws = 100, 
          group = "habitat")
 ```
 
-# Vergelijken van modellen
-## Model specificatie
+### Discussie
+
+Hoe kunnen we model fit nog verbeteren?
+
+We weten dat elke site 2x bezocht is.
+Eenmaal in moeras en eenmaal in bos.
+Het is natuurlijk mogelijk dat het aantal mieren in het moeras en het bos van dezelfde site gecorreleerd zullen zijn (site effect).
+Hiervoor kunnen we corrigeren door een random intercept voor elke site toe te voegen `... + (1|site)`.
 
 ```{r}
-fit_poisson2 <- brm(formula = sp_rich ~ habitat + (1|site),
-            data = ants_df,
-            family = poisson(),
-            chains = nchains, 
-            warmup = burnin, 
-            iter = niter,
-            cores = nparallel,
-            thin = thinning,
-            seed = 123)
+# Fit Poisson model met random intercepten per site
+fit_poisson2 <- brm(
+  formula = sp_rich ~ habitat + (1|site),
+  family = poisson(),
+  data = ants_df,
+  chains = nchains,
+  warmup = burnin, 
+  iter = niter,
+  cores = nparallel,
+  thin = thinning,
+  seed = 123)
 ```
 
-## MCMC convergentie
+Convergentie is goed.
 
 ```{r}
 plot(fit_poisson2)
@@ -442,33 +423,85 @@ rhats_fit_poisson2 <- rhat(fit_poisson2)[vars]
 mcmc_rhat(rhats_fit_poisson2) + yaxis_text(hjust = 1)
 ```
 
-## Model fit
+Model fit lijk nu nog beter.
 
 ```{r}
 pp_check(fit_poisson2, type = "dens_overlay_grouped", ndraws = 100, 
          group = "habitat")
 ```
 
-## Model selectie
+# Vergelijken van modellen
+
+Op basis van de PPCs kunnen we reeds zien welk model het best past bij de data.
+Verder zijn er nog enkele functies die **brms** voorziet om verschillende modellen te vergelijken.
+Met de functie `add_criterion()` kan je model fit criteria toevoegen aan model objecten.
+Typ `?add_criterion()` om te zien welke beschikbaar zijn.
 
 https://mc-stan.org/loo/articles/online-only/faq.html
 
 ```{r}
-# Leave-one-out cross-validation
-fit_poisson1 <- add_criterion(fit_poisson1, criterion = "loo")
-fit_poisson2 <- add_criterion(fit_poisson2, criterion = "loo")
+# Voeg model fit criteria toe aan model objecten
+fit_normal1 <- add_criterion(fit_normal1,
+                             criterion = c("loo", "kfold", "waic"), K = 10)
+fit_poisson1 <- add_criterion(fit_poisson1,
+                              criterion = c("loo", "kfold", "waic"), K = 10)
+fit_poisson2 <- add_criterion(fit_poisson2,
+                              criterion = c("loo", "kfold", "waic"), K = 10)
+```
 
-# Maak vergelijking
-comp <- loo_compare(fit_poisson1, fit_poisson2, criterion = "loo")
-print(comp, simplify = FALSE, digits = 3)
+## Leave-one-out cross-validation
+
+```{r}
+# Maak vergelijking leave-one-out cross-validation
+comp_loo <- loo_compare(fit_normal1, fit_poisson1, fit_poisson2,
+                        criterion = "loo")
+print(comp_loo, simplify = FALSE, digits = 3)
 ```
 
 Vergelijking met onzekerheid:
 
 ```{r}
-comp %>%
+comp_loo %>%
   as.data.frame() %>%
   select(elpd_diff, se_diff) %>%
+  mutate(ll_diff = elpd_diff  + qnorm(0.025) * se_diff,
+         ul_diff = elpd_diff  + qnorm(0.975) * se_diff)
+```
+
+## K-fold cross-validation
+
+```{r}
+# Maak vergelijking k-fold cross-validation
+comp_kfold <- loo_compare(fit_normal1, fit_poisson1, fit_poisson2,
+                          criterion = "kfold")
+print(comp_kfold, simplify = FALSE, digits = 3)
+```
+
+Vergelijking met onzekerheid:
+
+```{r}
+comp_kfold %>%
+  as.data.frame() %>%
+  select(elpd_diff, se_diff) %>%
+  mutate(ll_diff = elpd_diff  + qnorm(0.025) * se_diff,
+         ul_diff = elpd_diff  + qnorm(0.975) * se_diff)
+```
+
+## WAIC
+
+```{r}
+# Maak vergelijking waic
+comp_waic <- loo_compare(fit_normal1, fit_poisson1, fit_poisson2,
+                         criterion = "waic")
+print(comp_waic, simplify = FALSE, digits = 3)
+```
+
+Vergelijking met onzekerheid:
+
+```{r}
+comp_waic %>%
+  as.data.frame() %>%
+  select(waic, elpd_diff, se_diff) %>%
   mutate(ll_diff = elpd_diff  + qnorm(0.025) * se_diff,
          ul_diff = elpd_diff  + qnorm(0.975) * se_diff)
 ```
