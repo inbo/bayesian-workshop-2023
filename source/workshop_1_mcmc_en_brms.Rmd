@@ -43,7 +43,23 @@ conflicted::conflicts_prefer(brms::rstudent_t)
 conflicted::conflict_prefer("rhat", "brms")
 ```
 
-# Dataset laden en data exploratie
+# Wat is Bayesiaanse statistiek?
+
+Korte herhaling: wat is bayesiaanse statistiek
+Prior + likelihood -> posterior
+normal/ binomial/ poisson
+
+# Parmeterschatting via MCMC
+
+laat ze zelf een chain runnen (buiten brms?)
+Chains, iterations, burn-in -> https://nicercode.github.io/guides/mcmc/
+Rhat
+Parallel running
+Stan
+Verschillende regels metropolis-hastings algoritme
+
+# Een model fitten in brms
+## Dataset laden en data exploratie
 
 We laden een dataset in van het aantal mierensoorten in New England (USA).
 Typ `?ants` in de console voor meer info.
@@ -101,8 +117,8 @@ ants_df %>%
 ```
 
 
-# Een eerste simpel model
-## Model specificatie
+## Een eerste simpel model
+### Model specificatie
 
 Eerst en vooral specificeren we de MCMC parameters ...
 
@@ -134,7 +150,7 @@ fit1 <- brm(formula = bf(sp_rich ~ habitat),
 ```
 
 
-## MCMC convergentie
+### MCMC convergentie
 
 https://mc-stan.org/bayesplot/articles/visual-mcmc-diagnostics.html
 
@@ -180,7 +196,7 @@ mcmc_pairs(fit1, pars = c("b_Intercept", "b_habitatForest"),
            off_diag_args = list(size = 1.5))
 ```
 
-## Model fit
+### Model fit
 
 https://mc-stan.org/bayesplot/articles/graphical-ppcs.html
 
