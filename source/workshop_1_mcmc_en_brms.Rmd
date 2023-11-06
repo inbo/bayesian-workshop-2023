@@ -136,7 +136,7 @@ Uit de data exploratie zagen we al dat het aantal hoger lijkt te liggen in bosse
 ### Model specificatie
 
 We willen een model waarmee we het verschil kunnen onderzoeken in aantal soorten mieren tussen moeras- en boshabitats.
-Beschouw de responsvariabele $Y$ het aantal mieren $X_{habitat}$ een dummy variabele die gelijk is aan 0 voor moerassen en 1 voor bossen.
+Beschouw de responsvariabele $Y$ het aantal mieren en $X_{habitat}$ een dummy variabele die gelijk is aan 0 voor moerassen en 1 voor bossen.
 We veronderstellen dat $Y$ een Normaal verdeling volgt (equivalent aan een lineaire regressie met categorische variabele (= ANOVA))
 
 $$
@@ -194,6 +194,7 @@ Voor we de resultaten bekijken, controleren we eerst of het model goed geconverg
 ### MCMC convergentie
 
 Er zijn verschillende manieren om convergentie van het MCMC algoritme voor elke parameter te controleren.
+Hierbij worden de burn-in samples niet in rekening genomen.
 Eerst en vooral heb je *visuele controles*.
 
 We kunnen de MCMC samples met de `as_draws()` functies verkrijgen ofwel ineens visualiseren via de [bayesplot](https://mc-stan.org/bayesplot/) package die compatibel is met brmsfit objecten.
@@ -210,7 +211,7 @@ parameters <- c("b_Intercept", "b_habitatForest", "sigma")
 
 **trace plot**
 
-> Trace plots geven aan hoe 
+Trace plots geven aan hoe het samplen van de posterior distribution verloopt over de tijd. Het idee is dat elke chain convergeert naar dezelfde dezelfde distributie voor elke parameter (we spreken van mixing). Als deze plot een harige rups ('fuzzy caterpillar') voorstelt, wil dit zeggen dat convergentie goed is.
 
 ```{r}
 # Visualisatie door extractie samples met as_draws_df()
@@ -229,7 +230,7 @@ mcmc_trace(fit_normal1, pars = parameters)
 
 **running mean/quantile/... plot**
 
-Gelijkaardig als een trace plot kunnen we ook kijken hoe bepaalde statistieken zoals het gemiddelde of de quantielen zich voordoen naarmate het aantal iteraties toeneemt.
+Gelijkaardig als een trace plot kunnen we ook kijken hoe bepaalde statistieken zoals het gemiddelde of de quantielen zich voordoen over de tijd (= met toename aantal iteraties). Je wilt natuurlijk dat deze statistieken ook constant zijn na een aantal iteraties. Dan weet je dat je genoeg iteraties gebruikt hebt.
 
 ```{r}
 # code om cumulatieve quantielen te berekenen
@@ -245,7 +246,7 @@ cumquant <- function(x, p) {
 ```{r}
 as_draws_df(fit_normal1, variable = parameters) %>%
   mutate(across(all_of(parameters), ~cummean(.x),
-                .names = "{.col}_cummean"),
+                .names = "{.col}_gemiddelde"),
          across(all_of(parameters), ~cumquant(.x, 0.1),
                 .names = "{.col}_q10"),
          across(all_of(parameters), ~cumquant(.x, 0.9),
@@ -261,9 +262,9 @@ as_draws_df(fit_normal1, variable = parameters) %>%
 
 **posterior density plot**
 
-De vorm van de posterior distributions kan ook informatief zijn of de chains geconvergeerd zijn naar dezelfde distributies. 
-De vorm kan ook informatief zijn.
-Als er bijvoorbeeld meerdere maxima aanwezig zijn zou er mogelijks ook iets mis kunnen zijn met ons model.
+De vorm van de posterior distributions kan ook informatief zijn of de chains geconvergeerd zijn naar dezelfde distributies.
+Bovendien is het bijvoorbeeld mogelijk dat er meerdere maxima aanwezig zijn.
+Dan zou er mogelijks ook iets mis kunnen zijn met de specificatie van ons model.
 
 ```{r}
 mcmc_dens_overlay(fit_normal1, pars = parameters)
@@ -360,6 +361,13 @@ Mogelijks was onze keuze voor de Normaal verdeling niet goed.
 Aantallen zijn discrete, positieve waarden, terwijl de Normaal verdeling continue en zowel positieve als negatieve waarden kan voorspellen.
 De Poisson verdeling is een discrete verdeling die steeds positief is.
 Ze wordt vaak gebruikt voor het modelleren van geregistreerde aantallen gedurende een gegeven tijdsinterval, afstand, oppervlakte, volume ...
+
+---
+**Opmerking**
+
+Merk op dat MCMC convergentie en model fit twee verschillende dingen zijn. Het is niet omdat MCMC convergentie goed is dat model fit ook goed is. MCMC convergentie is om na te gaan of het MCMC algoritme om de distributies van de parameters te schatten goed verlopen is. Model fit controleert of het model dat door ons aangenomen is (assumptie normaliteit, lineair verband gemiddelde ...) goed past bij de data.
+
+---
 
 ## Specificatie van een Poisson model
 ### Model specificatie
@@ -486,20 +494,34 @@ Op basis van de PPCs kunnen we reeds zien welk model het best past bij de data.
 Verder zijn er nog enkele functies die **brms** voorziet om verschillende modellen te vergelijken.
 Met de functie `add_criterion()` kan je model fit criteria toevoegen aan model objecten.
 Typ `?add_criterion()` om te zien welke beschikbaar zijn.
+Zie ook <https://mc-stan.org/loo/articles/online-only/faq.html>
 
-https://mc-stan.org/loo/articles/online-only/faq.html
+## Leave-one-out cross-validation
+
+Cross-validation CV is een familie van technieken die probeert in te schatten hoe goed een model onbekende data zou voorspellen via predicties van het model gefit op de bekende data.
+Hiervoor moet je niet per se nieuwe data gaan inzamelen.
+Je kan jouw eigen data opsplitsen in een test en training dataset. 
+Je fit het model op de training dataset en je gebruikt dat model dan om te schatten hoe goed het de data in de test dataset kan voorspellen.
+Bij leave-one-out CV ga je telkens één observatie weglaten en het model opnieuw fitten o.b.v. alle andere data.
 
 ```{r}
 # Voeg model fit criteria toe aan model objecten
 fit_normal1 <- add_criterion(fit_normal1,
-                             criterion = c("loo", "kfold", "waic"), K = 10)
+                             criterion = c("loo"))
 fit_poisson1 <- add_criterion(fit_poisson1,
-                              criterion = c("loo", "kfold", "waic"), K = 10)
+                              criterion = c("loo"))
 fit_poisson2 <- add_criterion(fit_poisson2,
-                              criterion = c("loo", "kfold", "waic"), K = 10)
+                              criterion = c("loo"))
 ```
 
-## Leave-one-out cross-validation
+Om het verschil tussen de voorspelling van het model o.b.v. de training dataset te vergelijken met de weggelaten data, moeten we een zgn. utitily of loss function definiëren.
+Wij gebruiken hier de 'expected log pointwise predictive density' (ELPD).
+Voor deze workshop is het vooral van belang te beseffen dat dit een maat is voor hoe goed jouw Bayesiaanse model nieuwe datapunten voorspelt.
+Het wordt berekend door de log-likelihood van elk datapunt te nemen uit de posterior predictive distribution van je model en deze vervolgens uit te middelen. Een hogere elpd duidt op een betere modelfit en voorspellende nauwkeurigheid.
+Voor deze workshop is het vooral van belang te beseffen dat dit een maat is voor hoe goed het model onbekende data kan voorspellen (`elpd_loo` en de standaard error `se_elpd_loo`).
+`p_loo` is een maat voor de complexiteit van het model.
+`looic` =  -2*`elpd_loo`
+Met de functie `loo_compare()` kan je meerdere modellen vergelijken en wordt ook het verschil in ELPD berekend.
 
 ```{r}
 # Maak vergelijking leave-one-out cross-validation
@@ -508,7 +530,8 @@ comp_loo <- loo_compare(fit_normal1, fit_poisson1, fit_poisson2,
 print(comp_loo, simplify = FALSE, digits = 3)
 ```
 
-Vergelijking met onzekerheid:
+Als je ervan uitgaat dat dit verschil normaal verdeeld is, kan je met de onzekerheid een betrouwbaarheidsinterval berekenen.
+We zien dat het tweede Poisson model het best scoort en dat de andere modellen significant lager scoren.
 
 ```{r}
 comp_loo %>%
@@ -520,6 +543,33 @@ comp_loo %>%
 
 ## K-fold cross-validation
 
+Bij K-fold cross-validation wordt de data in $K$ groepen opgesplitst.
+Wij zullen hier $K = 10$ groepen (= folds) gebruiken.
+In plaats van dus telkens één enkele observatie weg te laten zoals bij leave-one-out CV gaan we hier $1/10$e van de data weglaten.
+Via de argumenten `folds = "stratified"` en `group = "habitat"` zorgen we ervoor dat voor elke groep de relatieve frequenties van habitat bewaard blijven.
+Deze techniek zal dus minder precies zijn dan de vorige, maar zal sneller zijn om te berekenen indien je met heel veel data werkt.
+
+```{r}
+# Voeg model fit criteria toe aan model objecten
+fit_normal1 <- add_criterion(fit_normal1,
+                             criterion = c("kfold"),
+                             K = 10,
+                             folds = "stratified",
+                             group = "habitat")
+fit_poisson1 <- add_criterion(fit_poisson1,
+                              criterion = c("kfold"),
+                              K = 10,
+                              folds = "stratified",
+                              group = "habitat")
+fit_poisson2 <- add_criterion(fit_poisson2,
+                              criterion = c("kfold"),
+                              K = 10,
+                              folds = "stratified",
+                              group = "habitat")
+```
+
+We krijgen dezelfde statistieken terug als voordien.
+
 ```{r}
 # Maak vergelijking k-fold cross-validation
 comp_kfold <- loo_compare(fit_normal1, fit_poisson1, fit_poisson2,
@@ -527,7 +577,8 @@ comp_kfold <- loo_compare(fit_normal1, fit_poisson1, fit_poisson2,
 print(comp_kfold, simplify = FALSE, digits = 3)
 ```
 
-Vergelijking met onzekerheid:
+De resultaten zijn hetzelfde, maar de verschillen zijn iets kleiner als voordien.
+Het verschil tussen de twee Poisson modellen is niet meer significant.
 
 ```{r}
 comp_kfold %>%
@@ -539,14 +590,28 @@ comp_kfold %>%
 
 ## WAIC
 
+Het Widely Applicable Information Criterion (WAIC) maakt geen gebruik van cross-validation maar is een computationele manier om de ELPD te schatten.
+Hoe dit precies gebeurt valt buiten het doel van deze workshop.
+Het is nog een andere maat om model selectie toe te passen.
+
+```{r}
+# Voeg model fit criteria toe aan model objecten
+fit_normal1 <- add_criterion(fit_normal1,
+                             criterion = c("waic"))
+fit_poisson1 <- add_criterion(fit_poisson1,
+                              criterion = c("waic"))
+fit_poisson2 <- add_criterion(fit_poisson2,
+                              criterion = c("waic"))
+```
+
+We krijgen opnieuw gelijkaardige resultaten als voordien.
+
 ```{r}
 # Maak vergelijking waic
 comp_waic <- loo_compare(fit_normal1, fit_poisson1, fit_poisson2,
                          criterion = "waic")
 print(comp_waic, simplify = FALSE, digits = 3)
 ```
-
-Vergelijking met onzekerheid:
 
 ```{r}
 comp_waic %>%
@@ -555,6 +620,11 @@ comp_waic %>%
   mutate(ll_diff = elpd_diff  + qnorm(0.025) * se_diff,
          ul_diff = elpd_diff  + qnorm(0.975) * se_diff)
 ```
+
+## Conclusie
+
+Zowel o.b.v. de PPC als de verschillende model selectie criteria, kunnen we besluiten dat het tweede Poisson model met random intercepts het best past bij de data.
+In principe konden we dit ook verwachten op basis van onze eigen intuïtie en het design van de studie, nl. het gebruik van de Poisson distributie om aantallen te modelleren en het gebruik van random intercepts om te controleren voor een hiërarchisch design (habitats genest in sites).
 
 # Resultaten finale model
 
