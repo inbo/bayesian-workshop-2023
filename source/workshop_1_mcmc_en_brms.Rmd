@@ -32,7 +32,7 @@ library(brms)      # fitten van Bayesiaanse modellen
 library(bayesplot) # MCMC visualisatie en posterior predictive checks
 library(tidybayes) # nabewerking en visualisatie van Bayesiaanse modellen
 
-# Conflicten
+# Conflicten tussen packages
 conflicted::conflicts_prefer(dplyr::filter)
 conflicted::conflicts_prefer(dplyr::lag)
 conflicted::conflicts_prefer(brms::ar)
@@ -521,7 +521,7 @@ Voor deze workshop is het vooral van belang te beseffen dat dit een maat is voor
 Het wordt berekend door de log-likelihood van elk datapunt te nemen uit de posterior predictive distribution van je model en deze vervolgens uit te middelen. Een hogere elpd duidt op een betere modelfit en voorspellende nauwkeurigheid.
 Voor deze workshop is het vooral van belang te beseffen dat dit een maat is voor hoe goed het model onbekende data kan voorspellen (`elpd_loo` en de standaard error `se_elpd_loo`).
 `p_loo` is een maat voor de complexiteit van het model.
-`looic` =  -2*`elpd_loo`
+$\text{looic} =  -2*\text{elpd_loo}$
 Met de functie `loo_compare()` kan je meerdere modellen vergelijken en wordt ook het verschil in ELPD berekend.
 
 ```{r}
