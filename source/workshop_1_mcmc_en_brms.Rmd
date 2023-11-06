@@ -498,7 +498,7 @@ comp_loo %>%
 
 ## K-fold cross-validation
 
-Bij K-fold cross-validation wordt de data in $K$ groepen opgesplitst. Wij zullen hier $K = 10$ groepen (= folds) gebruiken. In plaats van dus telkens één enkele observatie weg te laten zoals bij leave-one-out CV gaan we hier $1/10$e van de data weglaten. Via de argumenten `folds = "stratified"` en `group = "habitat"` zorgen we ervoor dat voor elke groep de relatieve frequenties van habitat bewaard blijven. Deze techniek zal dus minder precies zijn dan de vorige, maar zal sneller zijn om te berekenen indien je met heel veel data werkt.
+Bij K-fold cross-validation worden de data in $K$ groepen opgesplitst. Wij zullen hier $K = 10$ groepen (= folds) gebruiken. In plaats van dus telkens één enkele observatie weg te laten zoals bij leave-one-out CV gaan we hier $1/10$e van de data weglaten. Via de argumenten `folds = "stratified"` en `group = "habitat"` zorgen we ervoor dat voor elke groep de relatieve frequenties van habitat bewaard blijven. Deze techniek zal dus minder precies zijn dan de vorige, maar zal sneller zijn om te berekenen indien je met heel veel data werkt.
 
 ```{r}
 # Voeg K-fold model fit criterium toe aan model objecten
