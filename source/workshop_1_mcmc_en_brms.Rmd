@@ -43,13 +43,19 @@ conflicted::conflicts_prefer(brms::rstudent_t)
 conflicted::conflict_prefer("rhat", "brms")
 ```
 
-# Wat is Bayesiaanse statistiek?
+# Theoretische achtergrond
 
-Korte herhaling: wat is bayesiaanse statistiek
+## Wat is Bayesiaanse statistiek?
+
+### Statistische inferentie
+
+https://benlambertdotcom.files.wordpress.com/2019/03/bayesian-course-1-short.pdf
+
+(Zie ook [infomoment 24/10/2023](https://drive.google.com/drive/folders/1MIWu8-LnhTUnKKAchjI7FEmaJ8TN_1mb))
 Prior + likelihood -> posterior
 normal/ binomial/ poisson
 
-# Parmeterschatting via MCMC
+## Parameterschatting in Bayesiaanse statistiek
 
 laat ze zelf een chain runnen (buiten brms?)
 Chains, iterations, burn-in -> https://nicercode.github.io/guides/mcmc/
