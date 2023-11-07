@@ -128,7 +128,7 @@ Als oefening zullen we een model maken om het aantal soorten te vergelijken tuss
 
 ### Model specificatie
 
-We willen een model waarmee we het verschil kunnen onderzoeken in aantal soorten mieren tussen moeras- en boshabitats. Beschouw de responsvariabele $Y$ het aantal mieren en $X_{habitat}$ een dummy variabele die gelijk is aan 0 voor moerassen en 1 voor bossen. We veronderstellen dat $Y$ een Normaal verdeling volgt (equivalent aan een lineaire regressie met categorische variabele (= ANOVA))
+We willen een model waarmee we het verschil kunnen onderzoeken in aantal soorten mieren tussen moeras- en boshabitats. Beschouw de responsvariabele $Y$, het aantal mieren, en $X_{habitat}$, een dummy variabele die gelijk is aan 0 voor moerassen en 1 voor bossen. We veronderstellen dat $Y$ een Normaal verdeling volgt (equivalent aan een lineaire regressie met categorische variabele (= ANOVA))
 
 $$
 Y \sim N(\mu, \sigma^2)
@@ -153,10 +153,10 @@ nparallel <- nchains   # aantal cores voor parallel computing
 thinning <- 1          # verdunningsfactor (hier 1 = geen verdunning)
 ```
 
-Het model wordt gefit a.d.h.v. de `brm()` functie. De syntax is zeer gelijkaardig als functies die in frequentist statistics worden gebruikt zoals `lm()` en `glm()`. De `brm()` functie bevat heel wat argumenten (zie `?brm`). Handige argumenten die we hier niet gebruiken zijn bijvoorbeeld:
+Het model wordt gefit a.d.h.v. de `brm()` functie. De syntax is zeer gelijkaardig aan functies die in frequentist statistics worden gebruikt zoals `lm()` en `glm()`. De `brm()` functie bevat heel wat argumenten (zie `?brm`). Handige argumenten die we hier niet gebruiken zijn bijvoorbeeld:
 
 -   `inits` om de beginwaarden van MCMC algoritme in te stellen. Indien deze niet gespecificeerd zijn, gebruikt de functie default waarden.
--   `prior` om prior distributies te voorzien. Indien deze niet gespecificeerd zijn, gebruikt de functie default (niet informatieve) priors. `sample_prior` kan gebruikt worden om van de prior te samplen zodat je kan visualiseren of de gebruikte prior voldoet aan je verwachtingen.
+-   `prior` om prior distributies te voorzien. Indien deze niet gespecificeerd zijn, gebruikt de functie default (niet informatieve) priors. Het argument `sample_prior` kan gebruikt worden om van de prior te samplen zodat je kan visualiseren of de gebruikte prior voldoet aan je verwachtingen.
 -   `file` en `file_refit` om het model object op te slaan nadat het gefit is. Als je de code opnieuw runt en het model is al eens opgeslaan, dan zal `brm()` dit model gewoon inladen in plaats van het opnieuw te fitten.
 
 ```{r}
@@ -173,7 +173,7 @@ fit_normal1 <- brm(
   seed = 123)                  # seed voor reproduceerbare uitkomst
 ```
 
-Voor we de resultaten bekijken, controleren we eerst of het model goed geconvergeerd is.
+Voor we de resultaten bekijken, controleren we eerst of het model goed convergeert.
 
 ### MCMC convergentie
 
@@ -193,7 +193,7 @@ parameters <- c("b_Intercept", "b_habitatForest", "sigma")
 
 **trace plot**
 
-Trace plots geven aan hoe het samplen van de posterior distribution verloopt over de tijd. Het idee is dat elke chain convergeert naar dezelfde dezelfde distributie voor elke parameter (we spreken van mixing). Als deze plot een harige rups ('fuzzy caterpillar') voorstelt, wil dit zeggen dat convergentie goed is.
+Trace plots geven aan hoe het samplen van de posterior distribution verloopt over de tijd. Het idee is dat elke chain convergeert naar dezelfde distributie voor elke parameter (we spreken van mixing). Als deze plot eruit ziet als een harige rups ('fuzzy caterpillar'), wil dit zeggen dat de convergentie goed is.
 
 ```{r}
 # Visualisatie door extractie samples met as_draws_df()
@@ -214,10 +214,10 @@ mcmc_trace(fit_normal1, pars = parameters)
 
 **running mean/quantile/... plot**
 
-Gelijkaardig als een trace plot kunnen we ook kijken hoe bepaalde statistieken zoals het gemiddelde of de quantielen zich voordoen over de tijd (= met toename aantal iteraties). Je wilt natuurlijk dat deze statistieken ook constant zijn na een aantal iteraties. Dan weet je dat je genoeg iteraties gebruikt hebt.
+Naast een trace plot, kunnen we ook kijken hoe bepaalde statistieken zoals het gemiddelde of de kwantielen variëren over de tijd (= met toename aantal iteraties). Je wilt natuurlijk dat deze statistieken stabiliseren na een aantal iteraties want dan weet je dat je genoeg iteraties gebruikt hebt.
 
 ```{r}
-# code om cumulatieve quantielen te berekenen
+# code om cumulatieve kwantielen te berekenen
 # bron: https://rdrr.io/cran/cumstats/src/R/cumquant.R
 cumquant <- function(x, p) {
   out <- sapply(seq_along(x),
@@ -249,7 +249,7 @@ as_draws_df(fit_normal1, variable = parameters) %>%
 
 **posterior density plot**
 
-De vorm van de posterior distributions kan ook informatief zijn of de chains geconvergeerd zijn naar dezelfde distributies. Bovendien is het bijvoorbeeld mogelijk dat er meerdere maxima aanwezig zijn. Dan zou er mogelijks ook iets mis kunnen zijn met de specificatie van ons model.
+De vorm van de posterior distributions kan ook informatief zijn om na te kijken of de chains geconvergeerd zijn naar dezelfde distributies. Als we een bimodale verdeling zien (een kamelenrug met twee pieken), dan zou er mogelijks ook iets mis kunnen zijn met de specificatie van ons model.
 
 ```{r}
 # Visualisatie via Bayesplot package
@@ -313,7 +313,7 @@ print(ratios_fit_normal1)
 mcmc_neff(ratios_fit_normal1) + yaxis_text(hjust = 1)
 ```
 
-Andere packages die van pas kunnen komen bij het controleren van MCMC convergentie zijn [mcmcplots](https://cran.r-project.org/web/packages/mcmcplots/index.html) en [coda](https://cran.r-project.org/web/packages/coda/index.html). Voor deze packages moet je de MCMC samples wel eerst omzetten naar een mcmc object.
+Andere packages die van pas kunnen komen bij het controleren van MCMC convergentie zijn [mcmcplots](https://cran.r-project.org/web/packages/mcmcplots/index.html) en [coda](https://cran.r-project.org/web/packages/coda/index.html). Voor deze packages moet je de MCMC samples uit je **brms** model wel eerst omzetten naar een mcmc object.
 
 ```         
 # voorbeeld
@@ -325,7 +325,7 @@ We kunnen over het algemeen besluiten dat MCMC convergentie goed is voor alle pa
 
 ### Model fit
 
-De [posterior predictive check](https://mc-stan.org/bayesplot/articles/graphical-ppcs.html) (PPC) is een goede manier om te controleren of het model goed past bij de data. Het idee achter de PPC is dat, als een model goed past, de voorspelde waardes o.b.v. het model veel lijken op de data die we hebben gebruikt om het model te fitten. Om de voorspellingen te genereren die worden gebruikt voor PPCs, simuleren we vanuit de posterior predictive distribution (de posterior distribution van de responsvariabele). Visualisatie kan met de **bayesplot** package. De dikke lijn geeft de data aan en de dunne lijntjes verschillende simulaties o.b.v. het model.
+De [posterior predictive check](https://mc-stan.org/bayesplot/articles/graphical-ppcs.html) (PPC) is een goede manier om te controleren of het model goed past bij de data. Het idee achter de PPC is dat, als een model goed past, de voorspelde waardes o.b.v. het model veel lijken op de data die we hebben gebruikt om het model te fitten. Om de voorspellingen te genereren die worden gebruikt voor PPCs, simuleren we vanuit de posterior predictive distribution (de posterior distribution van de responsvariabele). Visualisatie kan met de **bayesplot** package. De dikke lijn toont de data en de dunne lijntjes tonen verschillende simulaties o.b.v. het model.
 
 ```{r}
 # Visualiseer model fit via Bayesplot package
@@ -333,7 +333,7 @@ pp_check(fit_normal1, type = "dens_overlay_grouped", ndraws = 100,
          group = "habitat")
 ```
 
-We zien dat de overeenkomst tussen de geobserveerde data en de voorspellingen o.b.v. ons model niet helemaal overeenkomen. Mogelijks was onze keuze voor de Normaal verdeling niet goed. Aantallen zijn discrete, positieve waarden, terwijl de Normaal verdeling continue en zowel positieve als negatieve waarden kan voorspellen. De Poisson verdeling is een discrete verdeling die steeds positief is. Ze wordt vaak gebruikt voor het modelleren van geregistreerde aantallen gedurende een gegeven tijdsinterval, afstand, oppervlakte, volume ...
+We zien dat de geobserveerde data en de voorspellingen o.b.v. ons model niet helemaal overeenkomen. Mogelijks was onze keuze voor de Normaal verdeling niet goed. Aantallen zijn discrete, positieve waarden, terwijl de Normaal verdeling continue en zowel positieve als negatieve waarden kan voorspellen. De Poisson verdeling is een discrete verdeling die steeds positief is. Ze wordt vaak gebruikt voor het modelleren van geregistreerde aantallen gedurende een gegeven tijdsinterval, afstand, oppervlakte, volume ...
 
 **Opmerking:**
 
@@ -464,7 +464,7 @@ Op basis van de PPCs kunnen we reeds zien welk model het best past bij de data. 
 
 ## Leave-one-out cross-validation
 
-Cross-validation CV is een familie van technieken die probeert in te schatten hoe goed een model onbekende data zou voorspellen via predicties van het model gefit op de bekende data. Hiervoor moet je niet per se nieuwe data gaan inzamelen. Je kan jouw eigen data opsplitsen in een test en training dataset. Je fit het model op de training dataset en je gebruikt dat model dan om te schatten hoe goed het de data in de test dataset kan voorspellen. Bij leave-one-out CV ga je telkens één observatie weglaten en het model opnieuw fitten o.b.v. alle andere data.
+Cross-validation (CV) is een familie van technieken die probeert in te schatten hoe goed een model onbekende data zou voorspellen via predicties van het model gefit op de bekende data. Hiervoor moet je niet per se nieuwe data gaan inzamelen. Je kan jouw eigen data opsplitsen in een test en training dataset. Je fit het model op de training dataset en je gebruikt dat model dan om te schatten hoe goed het de data in de test dataset kan voorspellen. Bij leave-one-out CV (LOOCV) ga je telkens één observatie weglaten en het model opnieuw fitten o.b.v. alle andere observaties.
 
 ```{r}
 # Voeg leave-one-out model fit criterium toe aan model objecten
@@ -476,7 +476,7 @@ fit_poisson2 <- add_criterion(fit_poisson2,
                               criterion = c("loo"))
 ```
 
-Om het verschil tussen de voorspelling van het model o.b.v. de training dataset te vergelijken met de weggelaten data, moeten we een zgn. utitily of loss function definiëren. Wij gebruiken hier de 'expected log pointwise predictive density' (ELPD). Voor deze workshop is het vooral van belang te beseffen dat dit een maat is voor hoe goed jouw Bayesiaanse model nieuwe datapunten voorspelt. Het wordt berekend door de log-likelihood van elk datapunt te nemen uit de posterior predictive distribution van je model en deze vervolgens uit te middelen. Een hogere elpd duidt op een betere modelfit en voorspellende nauwkeurigheid. Voor deze workshop is het vooral van belang te beseffen dat dit een maat is voor hoe goed het model onbekende data kan voorspellen (`elpd_loo` en de standaard error `se_elpd_loo`). `p_loo` is een maat voor de complexiteit van het model. $\text{looic} = -2*\text{elpd_loo}$ Met de functie `loo_compare()` kan je meerdere modellen vergelijken en wordt ook het verschil in ELPD berekend.
+Om het verschil tussen de voorspelling van het model o.b.v. de training dataset te vergelijken met de weggelaten data, moeten we een zgn. utitily of loss function definiëren. Wij gebruiken hier de 'expected log pointwise predictive density' (ELPD). Voor deze workshop is het vooral van belang te beseffen dat dit een maat is voor hoe goed jouw Bayesiaanse model nieuwe datapunten voorspelt. Het wordt berekend door de log-likelihood van elk datapunt te nemen uit de posterior predictive distribution van je model en deze vervolgens uit te middelen. Een hogere ELPD duidt op een betere model fit en voorspellende nauwkeurigheid. Voor deze workshop is het vooral van belang te beseffen dat dit een maat is voor hoe goed het model onbekende data kan voorspellen (`elpd_loo` en de standaard error `se_elpd_loo`). `p_loo` is een maat voor de complexiteit van het model. $\text{looic} = -2*\text{elpd_loo}$ Met de functie `loo_compare()` kan je meerdere modellen vergelijken en wordt ook het verschil in ELPD berekend.
 
 ```{r}
 # Maak vergelijking leave-one-out cross-validation en print
@@ -585,7 +585,7 @@ fit_poisson2
 
 Een handige package voor visualisatie van de resultaten van ons finale model is de [tidybayes](https://mjskay.github.io/tidybayes/articles/tidy-brms.html) package. Via deze package kan je werken met de posterior distributions zoals je met elke dataset zou werken via het **tidyverse** package.
 
-Met de functie `gather_draws()` kan je een bepaald aantal samples van de posterior distributies van bepaalde parameters gaan nemen en omzetten in een tabel in lang formaat. Je wilt meestal niet alle posterior samples gaan selecteren omdat dit er vaak onnodig veel zijn. Door een `seed` te specificeren zorg je ervoor dat dit telkens dezelfde samples zijn als je het script opnieuw runt. Via de klassieke **dplyr** functies kan je dan bepaalde samenvattende statistieken berekenen.
+Met de functie `gather_draws()` kan je een bepaald aantal samples van de posterior distributies van bepaalde parameters nemen en omzetten in een tabel in lang formaat. Je wilt meestal niet alle posterior samples selecteren omdat dit er vaak onnodig veel zijn. Door een `seed` te specificeren zorg je ervoor dat dit telkens dezelfde samples zijn als je het script opnieuw runt. Via de klassieke **dplyr** functies kan je dan bepaalde samenvattende statistieken berekenen.
 
 ```{r}
 fit_poisson2 %>%
@@ -603,7 +603,7 @@ fit_poisson2 %>%
 
 Handige functies van de **tidybayes** package zijn ook `median_qi()`, `mean_qi()` ... na `gather_draws()` die je kan gebruiken in plaats van `group_by()` en `summarise()`.
 
-We zouden nu graag het geschatte aantal soorten visualiseren per habitattype met bijbehorende onzekerheid. Met de functie `spread_draws()` kan je een bepaald aantal samples van de posterior distributie gaan nemen en omzetten in een tabel in wijd formaat. Het gemiddeld aantal soorten in moerassen volgens ons model is $\exp(\beta_0)$ en in bossen $\exp(\beta_0+\beta_1)$. We tonen de posterior distributions met de posterior mediaan en 60 en 90 % credible intervals.
+We zouden nu graag het geschatte aantal soorten visualiseren per habitattype met bijbehorende onzekerheid. Met de functie `spread_draws()` kan je een bepaald aantal samples van de posterior distributie nemen en omzetten in een tabel in wijd formaat. Het gemiddeld aantal soorten in moerassen volgens ons model is $\exp(\beta_0)$ en in bossen $\exp(\beta_0+\beta_1)$. We tonen de posterior distributions met de posterior mediaan en 60 en 90 % credible intervals.
 
 ```{r}
 fit_poisson2 %>%
