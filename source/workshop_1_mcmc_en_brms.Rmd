@@ -161,7 +161,7 @@ In ons voorbeeld van het aantal soorten mieren is:
 ```{r}
 # specify a unimodal, symmetric distribution
 unimodal <- data.frame(
-  x = seq(0, 50)
+  x = seq(10, 50)
 ) %>%
   mutate(prob = dnorm(x, mean = 30, sd = 5),
         cum_sum = pnorm(x, mean = 30, sd = 5))
@@ -179,6 +179,9 @@ bimodal <- data.frame(
   mutate(prob = (dnorm(x, mean = 32, sd = 4) +
            dnorm(x, mean = 12, sd = 2))/2,
         cum_sum = (pnorm(x, mean = 32, sd = 4) + pnorm(x, mean = 12, sd = 2))/2)
+measures <- data.frame(measures = c("mean", "mode", "median"),
+                       x = c(weighted.mean(x = bimodal$x, w = bimodal$prob),
+                             12, 18.7))
 limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI", "HPDI", "HPDI"),
                      x = c(9.5, 37, 7.8, 16.1, 25.5, 38.5))
 p2 <- ggplot(bimodal) +
@@ -188,7 +191,10 @@ p2 <- ggplot(bimodal) +
            aes(x = x, y = prob),
            stat = "identity", color = "grey", fill = "grey") +
   ggtitle("highest posterior density interval for a bimodal distribution") +
-  geom_line(aes(x = x, y = prob))
+  geom_line(aes(x = x, y = prob)) + 
+  geom_vline(data = measures, aes(xintercept = x), color = "red") +
+  geom_text(data = measures,
+            aes(label = measures, x = x, y = 0.1), color = "red")
 p3 <- ggplot(bimodal) +
   geom_vline(data = limits %>% filter(type == "CPI"), aes(xintercept = x)) +
   geom_bar(data = bimodal %>% filter(x >= 9.5 & x <= 37),
@@ -196,7 +202,14 @@ p3 <- ggplot(bimodal) +
            stat = "identity", color = "grey", fill = "grey") +
   ggtitle("equal tail credible interval for a bimodal distribution") +
   geom_line(aes(x = x, y = prob))
-p1 / (p2 + p3)
+p1 
+```
+
+```{r}
+p2
+```
+```{r}
+p3
 ```
 
 https://benlambertdotcom.files.wordpress.com/2019/03/bayesian-course-1-short.pdf
