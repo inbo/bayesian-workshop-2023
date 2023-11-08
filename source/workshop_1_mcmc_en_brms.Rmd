@@ -31,6 +31,7 @@ library(tidyverse) # gegevensverwerking en visualisatie
 library(brms)      # fitten van Bayesiaanse modellen
 library(bayesplot) # MCMC visualisatie en posterior predictive checks
 library(tidybayes) # nabewerking en visualisatie van Bayesiaanse modellen
+library(patchwork) # figuren combineren
 
 # Conflicten
 conflicted::conflicts_prefer(dplyr::filter)
@@ -144,7 +145,59 @@ Bij Bayesiaanse inferentie wordt Bayes' rule gebruikt:
 $$
 p(\theta|X) = \frac{p(X|\theta) * p(\theta)}{p(X)}
 $$
-Dit zorgt er voor dat we voor iedere potentiele waarde van $\theta$ een waarschijnlijkheid zullen hebben. De parameters hebben bij Bayesiaanse modellen dus een verdeling. Dit staat in contrast met frequentist inferentie waar de oplossingsruimte voor $\theta$ opgesplitst wordt in twee delen: waarden die niet of wel potentieel de *echte* waarde zijn.
+Dit zorgt er voor dat we voor iedere potentiele waarde van $\theta$ een waarschijnlijkheid zal hebben. De parameters hebben bij Bayesiaanse modellen dus een verdeling. Dit staat in contrast met frequentist inferentie waar de oplossingsruimte voor $\theta$ opgesplitst wordt in twee delen: waarden die niet of wel potentieel de *echte* waarde zijn.
+
+In ons voorbeeld van het aantal soorten mieren is:
+
+- $\theta$ het aantal soorten mieren
+- $X$ de data
+- $p(X|\theta)$ de *likelihood*
+- $p(\theta)$ is de *prior*
+- De noemer $p(X)$ maakt exacte Bayesiaanse inferentie moeilijk en heeft verschillende interpretaties:
+  - Vooraleer we data verzamelen, is dit de *prior predictive distribution*
+  - Als we data hebben, is dit een nummer dat de posterior normaliseert. Dit wordt *evidence* of *marginal likelihood genoemd.
+- $p(\theta|X)$ is de *posterior*. Het is een waarschijnlijkheidsverdeling. Deze posterior is het startpunt voor alle verdere analyse in Bayesiaanse inferentie.
+
+```{r}
+# specify a unimodal, symmetric distribution
+unimodal <- data.frame(
+  x = seq(0, 50)
+) %>%
+  mutate(prob = dnorm(x, mean = 30, sd = 5),
+        cum_sum = pnorm(x, mean = 30, sd = 5))
+limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI"),
+                     x = c(13, 46, 13, 46))
+
+p1 <- ggplot(unimodal) +
+  geom_line(aes(x = x, y = prob)) +
+  geom_vline(data = limits, aes(xintercept = x, color = type, lty = type))
+
+# specify a bimodal distribution
+bimodal <- data.frame(
+  x = seq(0, 50, 0.1)
+) %>%
+  mutate(prob = (dnorm(x, mean = 32, sd = 4) +
+           dnorm(x, mean = 12, sd = 2))/2,
+        cum_sum = (pnorm(x, mean = 32, sd = 4) + pnorm(x, mean = 12, sd = 2))/2)
+limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI", "HPDI", "HPDI"),
+                     x = c(9.5, 37, 7.8, 16.1, 25.5, 38.5))
+p2 <- ggplot(bimodal) +
+  geom_vline(data = limits %>% filter(type == "HPDI"), aes(xintercept = x)) +
+  geom_bar(data = bimodal %>%
+             filter((x >= 7.8 & x <= 16.1) | (x >= 25.5 & x <= 38.5)),
+           aes(x = x, y = prob),
+           stat = "identity", color = "grey", fill = "grey") +
+  ggtitle("highest posterior density interval for a bimodal distribution") +
+  geom_line(aes(x = x, y = prob))
+p3 <- ggplot(bimodal) +
+  geom_vline(data = limits %>% filter(type == "CPI"), aes(xintercept = x)) +
+  geom_bar(data = bimodal %>% filter(x >= 9.5 & x <= 37),
+           aes(x = x, y = prob),
+           stat = "identity", color = "grey", fill = "grey") +
+  ggtitle("equal tail credible interval for a bimodal distribution") +
+  geom_line(aes(x = x, y = prob))
+p1 / (p2 + p3)
+```
 
 https://benlambertdotcom.files.wordpress.com/2019/03/bayesian-course-1-short.pdf
 
@@ -153,6 +206,34 @@ Prior + likelihood -> posterior
 normal/ binomial/ poisson
 
 ## Parameterschatting in Bayesiaanse statistiek
+
+Herinner Bayes' rule:
+$$
+p(\theta|X) = \frac{p(X|\theta) * p(\theta)}{p(X)}
+$$
+
+We vermeldden eerder reeds dat de noemer hier heel moeilijk is om te berekenen.
+Er zijn twee mogelijke oplossingen:
+
+- *Conjugate priors*: Voor sommige verdelingen en combinaties van priors en likelihoods is het mogelijk om toch een analytische oplossing te krijgen (zie [deze lijst](https://en.wikipedia.org/wiki/Conjugate_prior)). Dit beperkt echter onze mogelijkheden:
+  - enkel mogelijk voor enkele univariate en bivariate problemen
+  - de conjugate priors beperken de vrijheid om je voorkennis voor te stellen. (bijvoorbeeld zero-inflation, )
+- *Sampling*: we krijgen informatie over de verdeling door eruit te samplen in plaats van het exact te berekenen.
+
+In Bayesiaanse inferentie zijn er verschillende mogelijkheden voor puntschattingen:
+
+- het posterior gemiddelde
+- de posterior mediaan
+- maximum a posteriori (MAP) oftewel de mode. De mode kan soms ver van het gemiddelde en de mediaan liggen.
+
+Ook voor de weergave van onzekerheid zijn er verschillende opties:
+
+- Highest posterior density interval (HPDI): dit is interessant als het bijvoorbeeld belangrijk is om regio's met een lage densiteit te vermijden.
+- Equal-tailed credible interval = Central posterior interval (CPI): Voor de berekening van een ($1-\alpha$)% interval, zal er $\frac{\alpha}{2}$ in zowel de linker als rechter "staart" van de verdeling zitten.
+
+Bij symmetrische, unimodale vverdelingen zijn HPDI en CPI hetzelfde. Anders kan er best wel wat verschil 
+
+
 
 laat ze zelf een chain runnen (buiten brms?)
 Chains, iterations, burn-in -> https://nicercode.github.io/guides/mcmc/
