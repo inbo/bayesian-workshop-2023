@@ -47,11 +47,108 @@ conflicted::conflict_prefer("rhat", "brms")
 
 ## Wat is Bayesiaanse statistiek?
 
+In deze sectie leggen we kort enkele basisprincipes uit Bayesiaanse statistiek. 
+We verwijzen ook graag naar het infomoment van 24 oktober 2023 (zie [infomoment 24/10/2023](https://drive.google.com/drive/folders/1MIWu8-LnhTUnKKAchjI7FEmaJ8TN_1mb)).
+
+
+
 ### Statistische inferentie
+
+Stel dat we geïnteresseerd zijn in het aantal soorten mieren dat voorkomt in een onderzoekssite van een vooraf gespecifieerde grootte.
+Aantallen worden vaak gespecifieerd door een Poisson verdeling aangezien deze verdeling enkel positieve gehele getallen aanneemt. 
+
+$$ X \sim Poisson(\theta)$$
+met $x$ het aantal soorten mieren en $\theta$ de parameter die we willen schatten.
+In een Poisson verdeling is er slechts één parameter; $\theta$ is gelijk aan het gemiddelde en de variantie van de verdeling.
+We kennen de echte waarde van $\theta$ niet *a priori*. 
+Ons model definieert een collectie van waarschijnlijkheidsmodellen (probability models); één voor iedere mogelijke waarde van $\theta$. 
+Deze collectie van modellen noemen we de *likelihood*.
+In onderstaande figuur tonen we drie voorbeelden van een potentiele likelihood.
+Het zijn drie kansdichtheidsfunctie van Poisson verdelingen met steeds een andere parameter $\theta$.
+
+```{r}
+likelihood <- data.frame(x = rep(seq(0, 25), 3),
+                         theta = c(rep(5, 26), rep(10, 26), rep(15, 26))) %>%
+  mutate(prob = stats::dpois(x, lambda = theta),
+         theta = as.factor(theta))
+likelihood %>%
+  ggplot(aes(x = x, y = prob, color = theta)) +
+  geom_point() + 
+  geom_errorbar(aes(ymin = 0, ymax = prob), width = 0) + 
+  xlab("aantal soorten mieren in een site") + 
+  ylab("kansdichtheid")
+```
+
+
+Stel dat we op één bepaalde site 8 verschillende soorten mieren vinden.
+Onze likelihood leert ons dat er een oneindig aantal waarden zijn voor $\theta$ waarmee we de uitkomst 8 krijgen. 
+De figuur hieronder toont dat de kans op $X = 8$ verschillend is in ieder van de voorbeeld likelihoods.
+
+```{r}
+likelihood %>%
+  ggplot(aes(x = x, y = prob, color = theta)) +
+  geom_point() + 
+  geom_errorbar(aes(ymin = 0, ymax = prob), width = 0) +
+  geom_bar(data = likelihood %>% filter(x == 8),
+           color = "grey", stat = "identity", alpha = 0.7) + 
+  xlab("aantal soorten mieren in een site") + 
+  ylab("kansdichtheid") +
+  facet_grid(cols = vars(theta))
+```
+
+Ieder van deze modellen met steeds een andere waarde van $\theta$ kan ons de waarde van $x=8$ geven.
+Bij statistische inferentie willen we de likelihood eigenlijk inverteren door gebruik te maken van onze voorkennis en voorkennis (prior).
+Op deze manier hopen we te weten te komen welk van alle modellen het meeste zinvol/waarschijnlijk is.
+Zowel frequentist als bayesiaanse methoden inverteren in essentie $p(X|\theta) \rightarrow p(\theta|X)$ maar de methode verschilt.
+
+
+**Frequentist inferentie**
+
+Bij frequentist inferentie definiëren we een hypothese over het data-genererende proces die we willen testen:
+
+-$H_0:$ de hypothese $\theta$ is waar
+-$H_1:$ de hypothese $\theta$ is niet waar
+
+De vuistregel in frequentist statistiek is dan:
+
+- als $P($data $X$ of extremer$|\theta) < 0.05$, dan is \theta niet waar  $\Rightarrow  P(\theta|X) = 0$
+
+- als $P($data $X$ of extremer$|\theta) \geq 0.05$, dan zou \theta kunnen waar zijn  $\Rightarrow P(\theta|X) = ?$
+
+In onderstaande figuur staan de volgende kansen afgebeeld:
+
+- $p(X\geq8|\theta = 5)\simeq$`r 1 - round(likelihood %>% filter(x <= 8 & theta == 5) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 5 niet verwerpen.
+- $p(X\leq8|\theta = 10)\simeq$`r round(likelihood %>% filter(x <= 8 & theta == 10) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 10 niet verwerpen.
+- $p(X\leq8|\theta = 15)\simeq$`r round(likelihood %>% filter(x <= 8 & theta == 15) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is kleiner dan 0.05 dus we verwerpen de hypothese dat $\theta$ gelijk is aan 15.
+
+```{r}
+likelihood %>%
+  ggplot(aes(x = x, y = prob, color = theta)) +
+  geom_point() + 
+  geom_errorbar(aes(ymin = 0, ymax = prob), width = 0) +
+  geom_bar(data = likelihood %>%
+             filter((x <= 8 & theta %in% c(10,15))|
+                      (x >= 8 & theta == 5)),
+           color = "grey", stat = "identity", alpha = 0.7) + 
+  xlab("aantal soorten mieren in een site") + 
+  ylab("kansdichtheid") +
+  facet_grid(cols = vars(theta))
+```
+
+Als we deze berekeningen herhalen voor verschillende waarden van $\theta^$, kunnen we ontdekken dat het 90% confidence interval (5% langs beiden kanten) gelijk is aan $4.0 \leq \theta \leq 14.4$.
+
+**Bayesiaanse inferentie**
+
+Bij Bayesiaanse inferentie wordt Bayes' rule gebruikt:
+
+$$
+p(\theta|X) = \frac{p(X|\theta) * p(\theta)}{p(X)}
+$$
+Dit zorgt er voor dat we voor iedere potentiele waarde van $\theta$ een waarschijnlijkheid zullen hebben. De parameters hebben bij Bayesiaanse modellen dus een verdeling. Dit staat in contrast met frequentist inferentie waar de oplossingsruimte voor $\theta$ opgesplitst wordt in twee delen: waarden die niet of wel potentieel de *echte* waarde zijn.
 
 https://benlambertdotcom.files.wordpress.com/2019/03/bayesian-course-1-short.pdf
 
-(Zie ook [infomoment 24/10/2023](https://drive.google.com/drive/folders/1MIWu8-LnhTUnKKAchjI7FEmaJ8TN_1mb))
+
 Prior + likelihood -> posterior
 normal/ binomial/ poisson
 
@@ -63,6 +160,9 @@ Rhat
 Parallel running
 Stan
 Verschillende regels metropolis-hastings algoritme
+MCMC: vermeld verdunning (thinning), chains, burn-in, iterations
+
+output: posterior, hpdi, credible interval, 
 
 # Een model fitten in brms
 ## Dataset laden en data exploratie
