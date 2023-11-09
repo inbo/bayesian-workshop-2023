@@ -108,7 +108,7 @@ Stel dat we op één bepaalde site 8 verschillende soorten mieren vinden.
 Onze likelihood leert ons dat er een oneindig aantal waarden zijn voor $\theta$ waarmee we de uitkomst 8 krijgen. 
 De figuur hieronder toont dat de kans op $X = 8$ verschillend is in ieder van de drie getoonde likelihoods.
 
-```{r}
+```{r, purl = FALSE}
 likelihood %>%
   ggplot(aes(x = x, y = prob, color = theta)) +
   geom_point() + 
@@ -145,7 +145,7 @@ In onderstaande figuur staan de volgende kansen afgebeeld:
 - $p(X\leq8|\theta = 10)\simeq$ `r round(likelihood %>% filter(x <= 8 & theta == 10) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 10 niet verwerpen.
 - $p(X\leq8|\theta = 15)\simeq$ `r round(likelihood %>% filter(x <= 8 & theta == 15) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is kleiner dan 0.05 dus we verwerpen de hypothese dat $\theta$ gelijk is aan 15.
 
-```{r}
+```{r, purl = FALSE}
 likelihood %>%
   ggplot(aes(x = x, y = prob, color = theta)) +
   geom_point() + 
@@ -292,7 +292,7 @@ p3
 We laden een dataset in van het aantal mierensoorten in New England (USA).
 Typ `?ants` in de console voor meer info.
 
-```{r}
+```{r data-expl-laad-data}
 # Laad dataset in
 data(ants)
 
@@ -307,13 +307,13 @@ glimpse(ants_df)
 
 Enkele samenvattende statistieken:
 
-```{r}
+```{r data-expl-summary}
 summary(ants_df)
 ```
 
 We visualiseren de data.
 
-```{r}
+```{r data-expl-vis1}
 ants_df %>%
   ggplot(aes(x = sp_rich)) +
     geom_bar() +
@@ -321,14 +321,14 @@ ants_df %>%
     facet_wrap(~habitat)
 ```
 
-```{r}
+```{r data-expl-vis2}
 ants_df %>%
   ggplot(aes(y = sp_rich, x = habitat)) +
     geom_boxplot() +
     scale_y_continuous(limits = c(0, NA))
 ```
 
-```{r}
+```{r data-expl-vis3}
 ants_df %>%
   ggplot(aes(y = sp_rich, x = latitude)) +
     geom_point() +
@@ -336,7 +336,7 @@ ants_df %>%
     facet_wrap(~habitat)
 ```
 
-```{r}
+```{r data-expl-vis4}
 ants_df %>%
   ggplot(aes(y = sp_rich, x = elevation)) +
     geom_point() +
@@ -350,7 +350,7 @@ ants_df %>%
 
 Eerst en vooral specificeren we de MCMC parameters ...
 
-```{r}
+```{r simpel-model-mcmc-par}
 # MCMC parameters
 nchains <- 3           # aantal chains
 niter <- 2000          # aantal iteraties (incl. burn-in, zie volgende)
@@ -364,7 +364,7 @@ Y \sim Pois(\beta_0 + \beta_1X_{habitat})\\
 \Rightarrow \ln(E(Y)) = \beta_0 + \beta_1X_{habitat}
 $$
 
-```{r}
+```{r simpel-model-fit-poisson}
 # Fit Poisson model
 fit1 <- brm(formula = bf(sp_rich ~ habitat),
             data = ants_df,
@@ -384,19 +384,19 @@ https://mc-stan.org/bayesplot/articles/visual-mcmc-diagnostics.html
 
 https://mc-stan.org/bayesplot/articles/plotting-mcmc-draws.html
 
-```{r}
+```{r simpel-model-colorscheme}
 color_scheme_set("mix-blue-red")
 ```
 
 Wat is een trace plot?
 
-```{r}
+```{r simpel-model-trace}
 mcmc_trace(fit1, pars = c("b_Intercept", "b_habitatForest"))
 ```
 
 Wat is posterior density?
 
-```{r}
+```{r simpel-model-posterior-density}
 mcmc_dens_overlay(fit1, pars = c("b_Intercept", "b_habitatForest"))
 ```
 
@@ -409,7 +409,7 @@ plot(fit1)
 
 Wat is Rhat?
 
-```{r}
+```{r simpel-model-rhat}
 rhats_fit1 <- rhat(fit1)[c("b_Intercept", "b_habitatForest")]
 mcmc_rhat(rhats_fit1) + yaxis_text(hjust = 1)
 ```
