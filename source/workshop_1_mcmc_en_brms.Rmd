@@ -195,7 +195,7 @@ parameters <- c("b_Intercept", "b_habitatForest", "sigma")
 
 Trace plots geven aan hoe het samplen van de posterior distribution verloopt over de tijd. Het idee is dat elke chain convergeert naar dezelfde distributie voor elke parameter (we spreken van mixing). Als deze plot eruit ziet als een harige rups ('fuzzy caterpillar'), wil dit zeggen dat de convergentie goed is.
 
-```{r}
+```{r simpel-model-trace1}
 # Visualisatie door extractie samples met as_draws_df()
 as_draws_df(fit_normal1, variable = parameters) %>%
   # zet om naar lang formaat voor visualisatie
@@ -207,7 +207,7 @@ as_draws_df(fit_normal1, variable = parameters) %>%
     facet_wrap(~parameter, nrow = 3, scales = "free")
 ```
 
-```{r}
+```{r simpel-model-trace2}
 # Visualisatie via Bayesplot package
 mcmc_trace(fit_normal1, pars = parameters)
 ```
@@ -227,8 +227,8 @@ cumquant <- function(x, p) {
 }
 ```
 
-```{r}
-# Extractie samples en bereken cummulatieve statistieken
+```{r simpel-model-cum-stat}
+# Extractie samples en bereken cumulatieve statistieken
 as_draws_df(fit_normal1, variable = parameters) %>%
   mutate(across(all_of(parameters), ~cummean(.x),
                 .names = "{.col}_gemiddelde"),
@@ -251,14 +251,16 @@ as_draws_df(fit_normal1, variable = parameters) %>%
 
 De vorm van de posterior distributions kan ook informatief zijn om na te kijken of de chains geconvergeerd zijn naar dezelfde distributies. Als we een bimodale verdeling zien (een kamelenrug met twee pieken), dan zou er mogelijks ook iets mis kunnen zijn met de specificatie van ons model.
 
-```{r}
-# Visualisatie via Bayesplot package
+```{r simpel-model-posterior-density2}
+# Visualisatie density plot van de posterior voor ieder van de chains apart in 
+# overlay. via Bayesplot package
 mcmc_dens_overlay(fit_normal1, pars = parameters)
 ```
 
 Nog eenvoudiger is de `plot()` functie gebruiken op het brmsfit object. Deze toont direct de trace plots en de posterior density plots naast elkaar voor elke parameter.
 
 ```{r}
+# trace plots en posterior density voor iedere parameter
 plot(fit_normal1)
 ```
 
@@ -266,8 +268,8 @@ plot(fit_normal1)
 
 > uitleg Wat is autocorrelatie? thinning
 
-```{r}
-# Visualisatie via Bayesplot package
+```{r simpel-model-autocorrelation}
+# Visualisatie autocorrelation plots via Bayesplot package
 mcmc_acf(fit_normal1, pars = parameters)
 ```
 
@@ -275,8 +277,8 @@ mcmc_acf(fit_normal1, pars = parameters)
 
 > uitleg Wat is cross-correlatie?
 
-```{r}
-# Visualisatie via Bayesplot package
+```{r simpel-model-crosscorrelation}
+# Visualisatie cross correlation via Bayesplot package
 mcmc_pairs(fit_normal1, pars = parameters,
            off_diag_args = list(size = 1.5))
 ```
@@ -287,13 +289,13 @@ Naast visuele checks zijn er ook *diagnostische controles*.
 
 Ook wel $\hat{R}$ (R-hat) of potential scale reduction factor genoemd. Een manier om te controleren of een chain is geconvergeerd, is door zijn gedrag te vergelijken met andere willekeurig geïnitialiseerde ketens. De $\hat{R}$ statistiek neemt de verhouding van de gemiddelde variantie van samples binnen elke chain tot de variantie van de gepoolde samples over alle chains heen. Als alle ketens convergeren naar een gemeenschappelijke distributie, zullen deze verhoudingen gelijk aan 1 zijn. Als de ketens niet zijn geconvergeerd naar een gemeenschappelijke verdeling, zal de $\hat{R}$ statistiek groter zijn dan 1. We kunnen de $\hat{R}$ statistieken extraheren via de `rhat()` functie en dan eventueel visualiseren met de `mcmc_rhat()` functie van de **bayesplot** package.
 
-```{r}
+```{r simpel-model-get-Rhat}
 # Krijg R-hats
 rhats_fit_normal1 <- rhat(fit_normal1)[parameters]
 print(rhats_fit_normal1)
 ```
 
-```{r}
+```{r simpel-model-plot-Rhat}
 # Plot R-hats via Bayesplot package
 mcmc_rhat(rhats_fit_normal1) + yaxis_text(hjust = 1)
 ```
@@ -302,13 +304,13 @@ mcmc_rhat(rhats_fit_normal1) + yaxis_text(hjust = 1)
 
 De effective sample size ($n_{eff}$) is een schatting van het aantal onafhankelijke trekkingen van de posterior distribution van elke parameter. Omdat de trekkingen binnen een Markov chain niet onafhankelijk zijn als er sprake is van autocorrelatie, is de effective sample size gewoonlijk kleiner dan de totale steekproefomvang, namelijk het aantal iteraties ($N$). Hoe groter de verhouding $n_{eff}/N$ hoe beter. De **bayesplot** package biedt een `neff_ratio()` extractorfunctie. De `mcmc_neff()` functie kan vervolgens worden gebruikt om de verhoudingen te plotten.
 
-```{r}
-# Krijg verhoudingen
+```{r simpel-model-get-effective-sample-size}
+# Krijg verhoudingen effective sample size
 ratios_fit_normal1 <- neff_ratio(fit_normal1)[parameters]
 print(ratios_fit_normal1)
 ```
 
-```{r}
+```{r simpel-model-plot- effective-sample-size}
 # Plot verhoudingen via Bayesplot package
 mcmc_neff(ratios_fit_normal1) + yaxis_text(hjust = 1)
 ```
@@ -327,7 +329,7 @@ We kunnen over het algemeen besluiten dat MCMC convergentie goed is voor alle pa
 
 De [posterior predictive check](https://mc-stan.org/bayesplot/articles/graphical-ppcs.html) (PPC) is een goede manier om te controleren of het model goed past bij de data. Het idee achter de PPC is dat, als een model goed past, de voorspelde waardes o.b.v. het model veel lijken op de data die we hebben gebruikt om het model te fitten. Om de voorspellingen te genereren die worden gebruikt voor PPCs, simuleren we vanuit de posterior predictive distribution (de posterior distribution van de responsvariabele). Visualisatie kan met de **bayesplot** package. De dikke lijn toont de data en de dunne lijntjes tonen verschillende simulaties o.b.v. het model.
 
-```{r}
+```{r simpel-model-fit1}
 # Visualiseer model fit via Bayesplot package
 pp_check(fit_normal1, type = "dens_overlay_grouped", ndraws = 100, 
          group = "habitat")
@@ -357,7 +359,7 @@ $$
 
 We moeten dus twee parameters schatten: $\beta_0$ en $\beta_1$ We gebruiken dezelfde MCMC parameters als voordien. Het enige wat we moeten aanpassen is de keuze `family = poisson()`.
 
-```{r}
+```{r poisson-model-fit}
 # Fit Poisson model
 fit_poisson1 <- brm(
   formula = sp_rich ~ habitat, # beschrijving van het model
@@ -375,12 +377,12 @@ fit_poisson1 <- brm(
 
 Convergentie ziet er opnieuw goed uit.
 
-```{r}
-# Visualiseer MCMC convergentie
+```{r poisson-model-convergentie}
+# Visualiseer MCMC convergentie van het Poisson model
 plot(fit_poisson1)
 ```
 
-```{r}
+```{r poisson-model-Rhat}
 # Extraheer en visualiseer R-hat waarden
 rhats_fit_poisson1 <- rhat(fit_poisson1)[c("b_Intercept", "b_habitatForest")]
 mcmc_rhat(rhats_fit_poisson1) + yaxis_text(hjust = 1)
@@ -390,7 +392,7 @@ mcmc_rhat(rhats_fit_poisson1) + yaxis_text(hjust = 1)
 
 We zien dat alle predicties nu wel positief zijn, maar de fit is nog altijd niet ideaal.
 
-```{r}
+```{r poisson-model-fit-vis}
 # Visualiseer model fit via Bayesplot package
 pp_check(fit_poisson1, type = "dens_overlay_grouped", ndraws = 100, 
          group = "habitat")
@@ -420,7 +422,7 @@ $$
 b_0 \sim N(0, \sigma_b)
 $$
 
-```{r}
+```{r rand-intercept-model-fit}
 # Fit Poisson model met random intercepten per site
 fit_poisson2 <- brm(
   formula = sp_rich ~ habitat + (1|site),
@@ -436,12 +438,12 @@ fit_poisson2 <- brm(
 
 Convergentie is goed.
 
-```{r}
+```{r rand-intercept-model-convergentie}
 # Visualiseer MCMC convergentie
 plot(fit_poisson2)
 ```
 
-```{r}
+```{r rand-intercept-model-rhat}
 # Extraheer en visualiseer R-hat waarden
 parameters2 <- c("b_Intercept", "b_habitatForest", "sd_site__Intercept")
 rhats_fit_poisson2 <- rhat(fit_poisson2)[parameters2]
@@ -450,8 +452,9 @@ mcmc_rhat(rhats_fit_poisson2) + yaxis_text(hjust = 1)
 
 Model fit lijkt nu nog beter.
 
-```{r}
-# Visualiseer model fit via Bayesplot package
+```{r rand-intercept-model-fit-vis}
+# Visualiseer model fit van het Poisson model met random intercept via
+# Bayesplot package
 pp_check(fit_poisson2, type = "dens_overlay_grouped", ndraws = 100, 
          group = "habitat")
 ```
@@ -466,7 +469,7 @@ Op basis van de PPCs kunnen we reeds zien welk model het best past bij de data. 
 
 Cross-validation (CV) is een familie van technieken die probeert in te schatten hoe goed een model onbekende data zou voorspellen via predicties van het model gefit op de bekende data. Hiervoor moet je niet per se nieuwe data gaan inzamelen. Je kan jouw eigen data opsplitsen in een test en training dataset. Je fit het model op de training dataset en je gebruikt dat model dan om te schatten hoe goed het de data in de test dataset kan voorspellen. Bij leave-one-out CV (LOOCV) ga je telkens één observatie weglaten en het model opnieuw fitten o.b.v. alle andere observaties.
 
-![Caption for the picture.](loocv.png)
+![Illustratie LOOCV.](loocv.png)
 
 ```{r vergelijken-loocv}
 # Voeg leave-one-out model fit criterium toe aan model objecten
@@ -490,7 +493,7 @@ print(comp_loo, simplify = FALSE, digits = 3)
 Als je ervan uitgaat dat dit verschil normaal verdeeld is, kan je met de onzekerheid een betrouwbaarheidsinterval berekenen. We zien dat het tweede Poisson model het best scoort en dat de andere modellen significant lager scoren.
 
 ```{r vergelijken-loocv-betrouwbaarheid}
-# Bereken betrouwbaarheidsinterval om modellen te vergelijken
+# Bereken betrouwbaarheidsinterval om modellen te vergelijken met loocv
 comp_loo %>%
   as.data.frame() %>%
   select(elpd_diff, se_diff) %>%
@@ -501,6 +504,8 @@ comp_loo %>%
 ## K-fold cross-validation
 
 Bij K-fold cross-validation worden de data in $K$ groepen opgesplitst. Wij zullen hier $K = 10$ groepen (= folds) gebruiken. In plaats van dus telkens één enkele observatie weg te laten zoals bij leave-one-out CV gaan we hier $1/10$e van de data weglaten. Via de argumenten `folds = "stratified"` en `group = "habitat"` zorgen we ervoor dat voor elke groep de relatieve frequenties van habitat bewaard blijven. Deze techniek zal dus minder precies zijn dan de vorige, maar zal sneller zijn om te berekenen indien je met heel veel data werkt.
+
+![Illustratie K-fold CV.](k-foldcv.png)
 
 ```{r vergelijken-K-fold}
 # Voeg K-fold model fit criterium toe aan model objecten
@@ -533,7 +538,7 @@ print(comp_kfold, simplify = FALSE, digits = 3)
 De resultaten zijn hetzelfde, maar de verschillen zijn iets kleiner als voordien. Het verschil tussen de twee Poisson modellen is niet meer significant.
 
 ```{r vergelijken-K-fold-betrouwbaarheid}
-# Bereken betrouwbaarheidsinterval om modellen te vergelijken
+# Bereken betrouwbaarheidsinterval om modellen te vergelijken met K-fold CV
 comp_kfold %>%
   as.data.frame() %>%
   select(elpd_diff, se_diff) %>%
@@ -565,7 +570,7 @@ print(comp_waic, simplify = FALSE, digits = 3)
 ```
 
 ```{r vergelijken-WAIC-betrouwbaarheid}
-# Bereken betrouwbaarheidsinterval om modellen te vergelijken
+# Bereken betrouwbaarheidsinterval om modellen te vergelijken met WAIC
 comp_waic %>%
   as.data.frame() %>%
   select(waic, elpd_diff, se_diff) %>%
@@ -582,6 +587,7 @@ Zowel o.b.v. de PPC als vergelijkingen met verschillende model selectie criteria
 Als we het model fit object bekijken, zien we resultaten die vergelijkbaar zijn met resultaten zoals we die zien als we een frequentist model gefit hebben. We krijgen enerzijds een schatting van alle parameters met hun onzekerheid maar anderzijds zien we dat dit duidelijk de output is van een Bayesiaans model. Zo krijgen we info over de parameters die we gebruikt hebben voor het MCMC algoritme, we krijgen een 95 % credible interval (CI) in plaats van een confidence interval en we krijgen bij elke parameter ook de $\hat{R}$ waarde die we eerder besproken hebben.
 
 ```{r resultaten-fit-poisson}
+# Bekijk het fit object van het Poisson model met random effecten
 fit_poisson2
 ```
 
@@ -607,7 +613,7 @@ Handige functies van de **tidybayes** package zijn ook `median_qi()`, `mean_qi()
 
 We zouden nu graag het geschatte aantal soorten visualiseren per habitattype met bijbehorende onzekerheid. Met de functie `spread_draws()` kan je een bepaald aantal samples van de posterior distributie nemen en omzetten in een tabel in wijd formaat. Het gemiddeld aantal soorten in moerassen volgens ons model is $\exp(\beta_0)$ en in bossen $\exp(\beta_0+\beta_1)$. We tonen de posterior distributions met de posterior mediaan en 60 en 90 % credible intervals.
 
-```{r}
+```{r resultaten-fit-poisson-3}
 fit_poisson2 %>%
   # verzamel 1000 posterior samples voor 2 parameters in wijd formaat
   spread_draws(b_Intercept, b_habitatForest, ndraws = 1000, seed = 123) %>%
@@ -634,20 +640,20 @@ $$
 
 Dit kan eenvoudig via de `hypothesis()` functie van de **brms** package.
 
-```{r}
+```{r resultaten-hypothese-test}
 # Test hypothese verschil tussen habitats
 hyp <- hypothesis(fit_poisson2, "habitatForest = 0", alpha = 0.05)
 hyp
 ```
 
-```{r}
+```{r resultaten-hypothese-test-vis}
 # Plot posterior distribution hypothese
 plot(hyp)
 ```
 
 Finaal visualiseren we de random effecten van de sites. We sorteren ze van hogere soortenrijkdom naar lager.
 
-```{r}
+```{r resultaten-visualiseer-random-effects}
 # Neem het gemiddelde van sd van random effects
 # om verderop aan figuur toe te voegen
 sd_mean <- fit_poisson2 %>%
@@ -672,7 +678,7 @@ fit_poisson2 %>%
 
 We gaan even terug naar ons allereerste model waarbij we de Normale verdeling gebruikten. Dit was equivalent aan een lineaire regressie met categorische variabele. Een lineaire regressie met categorische variabele wordt ook wel ANOVA genoemd en indien er maar twee groepen zijn is een ANOVA equivalent aan een t-test. We kunnen dus van de gelegenheid gebruik maken om de resultaten van ons eerst model (een Bayesiaans model) te vergelijken met de resultaten van een klassieke (frequentist) t-test.
 
-```{r}
+```{r vergelijking-frequentist}
 # Extraheer samenvattende statistieken Bayesiaans model
 sum_fit_normal1 <- summary(fit_normal1)
 verschil_moeras1 <- sum_fit_normal1$fixed$Estimate[2]
@@ -682,7 +688,7 @@ ul_verschil_moeras1 <- sum_fit_normal1$fixed$`u-95% CI`[2]
 sum_fit_normal1
 ```
 
-```{r}
+```{r vergelijking-frequentist-t-test}
 # Voor t-test uit en extraheer samenvattende statistieken
 t_test_normal1 <- t.test(sp_rich ~ habitat, data = ants_df)
 verschil_moeras2 <- t_test_normal1$estimate[2] - t_test_normal1$estimate[1]
