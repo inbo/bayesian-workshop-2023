@@ -83,13 +83,13 @@ Stel dat we geïnteresseerd zijn in het aantal soorten mieren dat voorkomt in ee
 Aantallen worden vaak gespecificeerd door een Poisson verdeling aangezien deze verdeling enkel positieve gehele getallen aanneemt. 
 
 $$ X \sim Poisson(\theta)$$
-met $x$ het aantal soorten mieren en $\theta$ de parameter die we willen schatten.
+met $X$ het aantal soorten mieren en $\theta$ de parameter die we willen schatten.
 In een Poisson verdeling is er slechts één parameter; $\theta$ is gelijk aan het gemiddelde en de variantie van de verdeling.
 We kennen de echte waarde van $\theta$ niet *a priori*. 
 Ons model definieert een collectie van waarschijnlijkheidsmodellen (probability models); één voor iedere mogelijke waarde van $\theta$. 
 Deze collectie van modellen noemen we de *likelihood*.
 In onderstaande figuur tonen we drie voorbeelden van een potentiele likelihood.
-Het zijn drie kansdichtheidsfunctie van Poisson verdelingen met steeds een andere parameter $\theta$.
+Het zijn drie kansdichtheidsfunctie van een Poisson verdelingen met steeds een andere parameter $\theta$.
 
 ```{r, purl = FALSE}
 likelihood <- data.frame(x = rep(seq(0, 25), 3),
@@ -120,7 +120,7 @@ likelihood %>%
   facet_grid(cols = vars(theta))
 ```
 
-Ieder van deze modellen met steeds een andere waarde van $\theta$ kan ons de waarde van $x=8$ geven.
+Ieder van deze modellen met steeds een andere waarde van $\theta$ kan ons de waarde van $X=8$ geven.
 Bij statistische inferentie willen we de likelihood eigenlijk inverteren door gebruik te maken van onze voorkennis (prior).
 Op deze manier hopen we te weten te komen welk model van alle potentiele modellen het meeste zinvol/waarschijnlijk is.
 Zowel frequentist als bayesiaanse methoden inverteren in essentie $p(X|\theta) \rightarrow p(\theta|X)$ maar de methode verschilt.
@@ -136,7 +136,6 @@ Bij frequentist inferentie definiëren we een hypothese over het data-genererend
 De vuistregel in frequentist statistiek is dan:
 
 - als $P($data $X$ of extremer$|\theta) < 0.05$, dan is \theta niet waar  $\Rightarrow  P(\theta|X) = 0$
-
 - als $P($data $X$ of extremer$|\theta) \geq 0.05$, dan zou \theta kunnen waar zijn  $\Rightarrow P(\theta|X) = ?$
 
 In onderstaande figuur staan de volgende kansen afgebeeld:
@@ -169,6 +168,7 @@ Bij Bayesiaanse inferentie wordt Bayes' rule gebruikt:
 $$
 p(\theta|X) = \frac{p(X|\theta) * p(\theta)}{p(X)}
 $$
+
 Dit zorgt er voor dat we voor iedere potentiele waarde van $\theta$ een waarschijnlijkheid zullen hebben.
 De parameters hebben bij Bayesiaanse modellen dus een verdeling.
 Dit staat in contrast met frequentist inferentie waar de oplossingsruimte voor $\theta$ opgesplitst wordt in twee delen: waarden die niet of wel waarschijnlijk zijn.
@@ -184,11 +184,7 @@ In ons voorbeeld van het aantal soorten mieren is:
   - Als we data hebben, is dit een nummer dat de posterior normaliseert. Dit wordt *evidence* of *marginal likelihood* genoemd.
 - $p(\theta|X)$ is de *posterior*. Het is een waarschijnlijkheidsverdeling. Deze posterior is het startpunt voor alle verdere analyse in Bayesiaanse inferentie.
 
-https://benlambertdotcom.files.wordpress.com/2019/03/bayesian-course-1-short.pdf
-
-
-Prior + likelihood -> posterior
-normal/ binomial/ poisson
+Op deze [website](https://iupbsapps.shinyapps.io/KruschkeFreqAndBayesApp/) vind je een mooie illustratie van hoe prior en likelihood gecombineerd worden om tot een posterior te komen ([tutorial](https://jkkweb.sitehost.iu.edu/KruschkeFreqAndBayesAppTutorial.html)).
 
 ## Parameterschatting in Bayesiaanse statistiek
 
@@ -285,6 +281,9 @@ p2
 p3
 ```
 
+
+## Hypotheses testen
+Bayes' factor
 
 # Een model fitten in brms
 ## Dataset laden en data exploratie
