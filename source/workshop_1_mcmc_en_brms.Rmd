@@ -466,7 +466,9 @@ Op basis van de PPCs kunnen we reeds zien welk model het best past bij de data. 
 
 Cross-validation (CV) is een familie van technieken die probeert in te schatten hoe goed een model onbekende data zou voorspellen via predicties van het model gefit op de bekende data. Hiervoor moet je niet per se nieuwe data gaan inzamelen. Je kan jouw eigen data opsplitsen in een test en training dataset. Je fit het model op de training dataset en je gebruikt dat model dan om te schatten hoe goed het de data in de test dataset kan voorspellen. Bij leave-one-out CV (LOOCV) ga je telkens één observatie weglaten en het model opnieuw fitten o.b.v. alle andere observaties.
 
-```{r}
+![Caption for the picture.](loocv.png)
+
+```{r vergelijken-loocv}
 # Voeg leave-one-out model fit criterium toe aan model objecten
 fit_normal1 <- add_criterion(fit_normal1,
                              criterion = c("loo"))
@@ -478,7 +480,7 @@ fit_poisson2 <- add_criterion(fit_poisson2,
 
 Om het verschil tussen de voorspelling van het model o.b.v. de training dataset te vergelijken met de weggelaten data, moeten we een zgn. utitily of loss function definiëren. Wij gebruiken hier de 'expected log pointwise predictive density' (ELPD). Voor deze workshop is het vooral van belang te beseffen dat dit een maat is voor hoe goed jouw Bayesiaanse model nieuwe datapunten voorspelt. Het wordt berekend door de log-likelihood van elk datapunt te nemen uit de posterior predictive distribution van je model en deze vervolgens uit te middelen. Een hogere ELPD duidt op een betere model fit en voorspellende nauwkeurigheid. Voor deze workshop is het vooral van belang te beseffen dat dit een maat is voor hoe goed het model onbekende data kan voorspellen (`elpd_loo` en de standaard error `se_elpd_loo`). `p_loo` is een maat voor de complexiteit van het model. $\text{looic} = -2*\text{elpd_loo}$ Met de functie `loo_compare()` kan je meerdere modellen vergelijken en wordt ook het verschil in ELPD berekend.
 
-```{r}
+```{r vergelijken-loocv-compare}
 # Maak vergelijking leave-one-out cross-validation en print
 comp_loo <- loo_compare(fit_normal1, fit_poisson1, fit_poisson2,
                         criterion = "loo")
@@ -487,7 +489,7 @@ print(comp_loo, simplify = FALSE, digits = 3)
 
 Als je ervan uitgaat dat dit verschil normaal verdeeld is, kan je met de onzekerheid een betrouwbaarheidsinterval berekenen. We zien dat het tweede Poisson model het best scoort en dat de andere modellen significant lager scoren.
 
-```{r}
+```{r vergelijken-loocv-betrouwbaarheid}
 # Bereken betrouwbaarheidsinterval om modellen te vergelijken
 comp_loo %>%
   as.data.frame() %>%
@@ -500,7 +502,7 @@ comp_loo %>%
 
 Bij K-fold cross-validation worden de data in $K$ groepen opgesplitst. Wij zullen hier $K = 10$ groepen (= folds) gebruiken. In plaats van dus telkens één enkele observatie weg te laten zoals bij leave-one-out CV gaan we hier $1/10$e van de data weglaten. Via de argumenten `folds = "stratified"` en `group = "habitat"` zorgen we ervoor dat voor elke groep de relatieve frequenties van habitat bewaard blijven. Deze techniek zal dus minder precies zijn dan de vorige, maar zal sneller zijn om te berekenen indien je met heel veel data werkt.
 
-```{r}
+```{r vergelijken-K-fold}
 # Voeg K-fold model fit criterium toe aan model objecten
 fit_normal1 <- add_criterion(fit_normal1,
                              criterion = c("kfold"),
@@ -521,7 +523,7 @@ fit_poisson2 <- add_criterion(fit_poisson2,
 
 We krijgen dezelfde statistieken terug als voordien.
 
-```{r}
+```{r vergelijken-K-fold-compare}
 # Maak vergelijking k-fold cross-validation en print
 comp_kfold <- loo_compare(fit_normal1, fit_poisson1, fit_poisson2,
                           criterion = "kfold")
@@ -530,7 +532,7 @@ print(comp_kfold, simplify = FALSE, digits = 3)
 
 De resultaten zijn hetzelfde, maar de verschillen zijn iets kleiner als voordien. Het verschil tussen de twee Poisson modellen is niet meer significant.
 
-```{r}
+```{r vergelijken-K-fold-betrouwbaarheid}
 # Bereken betrouwbaarheidsinterval om modellen te vergelijken
 comp_kfold %>%
   as.data.frame() %>%
@@ -543,7 +545,7 @@ comp_kfold %>%
 
 Het Widely Applicable Information Criterion (WAIC) maakt geen gebruik van cross-validation maar is een computationele manier om de ELPD te schatten. Hoe dit precies gebeurt valt buiten het doel van deze workshop. Het is nog een andere maat om model selectie toe te passen.
 
-```{r}
+```{r vergelijken-WAIC}
 # Voeg WAIC model fit criterium toe aan model objecten
 fit_normal1 <- add_criterion(fit_normal1,
                              criterion = c("waic"))
@@ -555,14 +557,14 @@ fit_poisson2 <- add_criterion(fit_poisson2,
 
 We krijgen opnieuw gelijkaardige resultaten als voordien.
 
-```{r}
+```{r vergelijken-WAIC-compare}
 # Maak vergelijking waic en print
 comp_waic <- loo_compare(fit_normal1, fit_poisson1, fit_poisson2,
                          criterion = "waic")
 print(comp_waic, simplify = FALSE, digits = 3)
 ```
 
-```{r}
+```{r vergelijken-WAIC-betrouwbaarheid}
 # Bereken betrouwbaarheidsinterval om modellen te vergelijken
 comp_waic %>%
   as.data.frame() %>%
@@ -579,7 +581,7 @@ Zowel o.b.v. de PPC als vergelijkingen met verschillende model selectie criteria
 
 Als we het model fit object bekijken, zien we resultaten die vergelijkbaar zijn met resultaten zoals we die zien als we een frequentist model gefit hebben. We krijgen enerzijds een schatting van alle parameters met hun onzekerheid maar anderzijds zien we dat dit duidelijk de output is van een Bayesiaans model. Zo krijgen we info over de parameters die we gebruikt hebben voor het MCMC algoritme, we krijgen een 95 % credible interval (CI) in plaats van een confidence interval en we krijgen bij elke parameter ook de $\hat{R}$ waarde die we eerder besproken hebben.
 
-```{r}
+```{r resultaten-fit-poisson}
 fit_poisson2
 ```
 
@@ -587,7 +589,7 @@ Een handige package voor visualisatie van de resultaten van ons finale model is 
 
 Met de functie `gather_draws()` kan je een bepaald aantal samples van de posterior distributies van bepaalde parameters nemen en omzetten in een tabel in lang formaat. Je wilt meestal niet alle posterior samples selecteren omdat dit er vaak onnodig veel zijn. Door een `seed` te specificeren zorg je ervoor dat dit telkens dezelfde samples zijn als je het script opnieuw runt. Via de klassieke **dplyr** functies kan je dan bepaalde samenvattende statistieken berekenen.
 
-```{r}
+```{r resultaten-fit-poisson-2}
 fit_poisson2 %>%
   # verzamel 1000 posterior samples voor 2 parameters in lang formaat
   gather_draws(b_Intercept, b_habitatForest, ndraws = 1000, seed = 123) %>%
