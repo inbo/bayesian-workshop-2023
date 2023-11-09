@@ -28,6 +28,7 @@ library(GLMsData)  # datasets voor GLMs
 library(tidyverse) # gegevensverwerking en visualisatie
 library(brms)      # fitten van Bayesiaanse modellen
 library(bayesplot) # MCMC visualisatie en posterior predictive checks
+library(tidybayes) # nabewerking en visualisatie van Bayesiaanse modellen
 
 # Conflicten tussen packages
 conflicted::conflicts_prefer(dplyr::filter)
