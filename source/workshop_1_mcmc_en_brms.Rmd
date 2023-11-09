@@ -5,7 +5,7 @@ author: "Raïsa Carmen, Ward Langeraert & Toon Van Daele"
 date: "`r Sys.Date()`"
 output:
   bookdown::html_document2:
-    code_folding: show
+    code_folding: hide
     toc: true
     toc_float: true
     toc_collapsed: true
@@ -41,21 +41,260 @@ conflicted::conflicts_prefer(brms::rstudent_t)
 conflicted::conflict_prefer("rhat", "brms")
 ```
 
-# Wat is Bayesiaanse statistiek?
+# Theoretische achtergrond
 
-Korte herhaling: wat is bayesiaanse statistiek Prior + likelihood -\> posterior normal/ binomial/ poisson
+## Wat is Bayesiaanse statistiek?
 
-# Parmeterschatting via MCMC
+In deze sectie herhalen we kort enkele basisprincipes van Bayesiaanse statistiek. 
+We verwijzen ook graag naar het infomoment van 24 oktober 2023 (zie [infomoment 24/10/2023](https://drive.google.com/drive/folders/1MIWu8-LnhTUnKKAchjI7FEmaJ8TN_1mb)).
+```{r, purl = FALSE}
+data.frame(
+  wat = c(
+   "interpretatie kans",
+   "gebruikte kennis",
+   "hypothesetest",
+   "terminologie",
+   "parameters en data"
+  ),
+  Frequentist = c(
+    "lange termijn relatieve frequentie",
+    "enkel data",
+    "kans op data die minstens even extreem is als de verzamelde data",
+    "p-waarde, confidence interval, type 1 en type 2 fout,...",
+    "parameters zijn vast en onbekend, data is random"
+  ),
+  Bayesiaans = c(
+    "relatieve waarschijnlijkheid",
+    "data en voorkennis (prior)",
+    "kans dat de hypothese klopt",
+    "prior, likelihood, posterior, credible interval,...",
+    "parameters zijn onzeker en hebben een verdeling, data ligt vast"
+  )
+) %>%
+  kable(booktabs = TRUE, 
+        col.names = c("", "Frequentist", "Bayesiaans"))
+```
 
-laat ze zelf een chain runnen (buiten brms?) Chains, iterations, burn-in -\> <https://nicercode.github.io/guides/mcmc/> Rhat Parallel running Stan Verschillende regels metropolis-hastings algoritme
+
+### Statistische inferentie
+
+Stel dat we geïnteresseerd zijn in het aantal soorten mieren dat voorkomt in een onderzoekssite van een vooraf gespecificeerde grootte.
+Aantallen worden vaak gespecificeerd door een Poisson verdeling aangezien deze verdeling enkel positieve gehele getallen aanneemt. 
+
+$$ X \sim Poisson(\theta)$$
+met $X$ het aantal soorten mieren en $\theta$ de parameter die we willen schatten.
+In een Poisson verdeling is er slechts één parameter; $\theta$ is gelijk aan het gemiddelde en de variantie van de verdeling.
+We kennen de echte waarde van $\theta$ niet *a priori*. 
+Ons model definieert een collectie van waarschijnlijkheidsmodellen (probability models); één voor iedere mogelijke waarde van $\theta$. 
+Deze collectie van modellen noemen we de *likelihood*.
+In onderstaande figuur tonen we drie voorbeelden van een potentiele likelihood.
+Het zijn drie kansdichtheidsfunctie van een Poisson verdelingen met steeds een andere parameter $\theta$.
+
+```{r, purl = FALSE}
+likelihood <- data.frame(x = rep(seq(0, 25), 3),
+                         theta = c(rep(5, 26), rep(10, 26), rep(15, 26))) %>%
+  mutate(prob = stats::dpois(x, lambda = theta),
+         theta = as.factor(theta))
+likelihood %>%
+  ggplot(aes(x = x, y = prob, color = theta)) +
+  geom_point() + 
+  geom_errorbar(aes(ymin = 0, ymax = prob), width = 0) + 
+  xlab("aantal soorten mieren in een site") + 
+  ylab("kansdichtheid")
+```
+
+Stel dat we op één bepaalde site 8 verschillende soorten mieren vinden.
+Onze likelihood leert ons dat er een oneindig aantal waarden zijn voor $\theta$ waarmee we de uitkomst 8 krijgen. 
+De figuur hieronder toont dat de kans op $X = 8$ verschillend is in ieder van de drie getoonde likelihoods.
+
+```{r, purl = FALSE}
+likelihood %>%
+  ggplot(aes(x = x, y = prob, color = theta)) +
+  geom_point() + 
+  geom_errorbar(aes(ymin = 0, ymax = prob), width = 0) +
+  geom_bar(data = likelihood %>% filter(x == 8),
+           color = "grey", stat = "identity", alpha = 0.7) + 
+  xlab("aantal soorten mieren in een site") + 
+  ylab("kansdichtheid") +
+  facet_grid(cols = vars(theta))
+```
+
+Ieder van deze modellen met steeds een andere waarde van $\theta$ kan ons de waarde van $X=8$ geven.
+Bij statistische inferentie willen we de likelihood eigenlijk inverteren door gebruik te maken van onze voorkennis (prior).
+Op deze manier hopen we te weten te komen welk model van alle potentiele modellen het meeste zinvol/waarschijnlijk is.
+Zowel frequentist als bayesiaanse methoden inverteren in essentie $p(X|\theta) \rightarrow p(\theta|X)$ maar de methode verschilt.
+
+
+**Frequentist inferentie**
+
+Bij frequentist inferentie definiëren we een hypothese over het data-genererende proces die we willen testen:
+
+-$H_0:$ de hypothese $\theta$ is waar
+-$H_1:$ de hypothese $\theta$ is niet waar
+
+De vuistregel in frequentist statistiek is dan:
+
+- als $P($data $X$ of extremer$|\theta) < 0.05$, dan is \theta niet waar  $\Rightarrow  P(\theta|X) = 0$
+- als $P($data $X$ of extremer$|\theta) \geq 0.05$, dan zou \theta kunnen waar zijn  $\Rightarrow P(\theta|X) = ?$
+
+In onderstaande figuur staan de volgende kansen afgebeeld:
+
+- $p(X\geq8|\theta = 5)\simeq$ `r 1 - round(likelihood %>% filter(x <= 8 & theta == 5) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 5 niet verwerpen.
+- $p(X\leq8|\theta = 10)\simeq$ `r round(likelihood %>% filter(x <= 8 & theta == 10) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 10 niet verwerpen.
+- $p(X\leq8|\theta = 15)\simeq$ `r round(likelihood %>% filter(x <= 8 & theta == 15) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is kleiner dan 0.05 dus we verwerpen de hypothese dat $\theta$ gelijk is aan 15.
+
+```{r, purl = FALSE}
+likelihood %>%
+  ggplot(aes(x = x, y = prob, color = theta)) +
+  geom_point() + 
+  geom_errorbar(aes(ymin = 0, ymax = prob), width = 0) +
+  geom_bar(data = likelihood %>%
+             filter((x <= 8 & theta %in% c(10,15))|
+                      (x >= 8 & theta == 5)),
+           color = "grey", stat = "identity", alpha = 0.7) + 
+  xlab("aantal soorten mieren in een site") + 
+  ylab("kansdichtheid") +
+  facet_grid(cols = vars(theta))
+```
+
+Als we deze berekeningen herhalen voor verschillende waarden van $\theta$, kunnen we ontdekken dat het 90% confidence interval (5% langs beiden kanten) gelijk is aan $4.0 \leq \theta \leq 14.4$.
+De beslissingsruimte voor de parameter $\theta$ wordt dus opgedeeld in twee delen; waarden die waarschijnlijk zijn en waarden die niet waarschijnlijk zijn.
+
+**Bayesiaanse inferentie**
+
+Bij Bayesiaanse inferentie wordt Bayes' rule gebruikt:
+
+$$
+p(\theta|X) = \frac{p(X|\theta) * p(\theta)}{p(X)}
+$$
+
+Dit zorgt er voor dat we voor iedere potentiele waarde van $\theta$ een waarschijnlijkheid zullen hebben.
+De parameters hebben bij Bayesiaanse modellen dus een verdeling.
+Dit staat in contrast met frequentist inferentie waar de oplossingsruimte voor $\theta$ opgesplitst wordt in twee delen: waarden die niet of wel waarschijnlijk zijn.
+
+In ons voorbeeld van het aantal soorten mieren is:
+
+- $\theta$ het gemiddelde aantal soorten mieren
+- $X$ de data
+- $p(X|\theta)$ de *likelihood*
+- $p(\theta)$ de *prior*
+- De noemer $p(X)$ maakt exacte Bayesiaanse inferentie moeilijk en heeft verschillende interpretaties:
+  - Vooraleer we data verzamelen, is dit de *prior predictive distribution*
+  - Als we data hebben, is dit een nummer dat de posterior normaliseert. Dit wordt *evidence* of *marginal likelihood* genoemd.
+- $p(\theta|X)$ is de *posterior*. Het is een waarschijnlijkheidsverdeling. Deze posterior is het startpunt voor alle verdere analyse in Bayesiaanse inferentie.
+
+
+Op deze [website](https://iupbsapps.shinyapps.io/KruschkeFreqAndBayesApp/) vind je een mooie illustratie van hoe prior en likelihood gecombineerd worden om tot een posterior te komen ([tutorial](https://jkkweb.sitehost.iu.edu/KruschkeFreqAndBayesAppTutorial.html)).
+
+
+## Parameterschatting in Bayesiaanse statistiek
+
+
+Herinner Bayes' rule:
+$$
+p(\theta|X) = \frac{p(X|\theta) * p(\theta)}{p(X)}
+$$
+
+We vermeldden eerder reeds dat de noemer hier heel moeilijk is om te berekenen.
+Er zijn twee mogelijke oplossingen:
+
+- *Conjugate priors*: Voor sommige verdelingen en combinaties van priors en likelihoods is het mogelijk om toch een analytische oplossing te krijgen (zie [deze lijst](https://en.wikipedia.org/wiki/Conjugate_prior)). Dit beperkt echter onze mogelijkheden:
+  - enkel mogelijk voor enkele univariate en bivariate problemen
+  - de conjugate priors beperken de vrijheid om je voorkennis voor te stellen. (bijvoorbeeld zero-inflation, )
+- *Sampling*: we krijgen informatie over de verdeling door eruit te samplen in plaats van het exact te berekenen.
+
+#--------------------------------INSERT MCMC HERE------------------------------#
+laat ze zelf een chain runnen (buiten brms?)
+Chains, iterations, burn-in -> https://nicercode.github.io/guides/mcmc/
+Rhat
+Parallel running
+Stan
+Verschillende regels metropolis-hastings algoritme
+MCMC: vermeld verdunning (thinning), chains, burn-in, iterations
+#--------------------------------END MCMC HERE---------------------------------#
+
+
+Zodra we de posterior kennen, zijn er in Bayesiaanse inferentie verschillende mogelijkheden voor puntschattingen (zie ook figuren hieronder):
+
+- het posterior gemiddelde
+- de posterior mediaan
+- maximum a posteriori (MAP) oftewel de mode. De mode kan soms ver van het gemiddelde en de mediaan liggen.
+
+Ook voor de weergave van onzekerheid zijn er verschillende opties:
+
+- Highest posterior density interval (HPDI): dit is interessant als het bijvoorbeeld belangrijk is om regio's met een lage densiteit te vermijden.
+- Equal-tailed credible interval = Central posterior interval (CPI): Voor de berekening van een $100*(1-\alpha)$% interval, zal er $\frac{\alpha}{2}$ waarschijnlijkheid in zowel de linker als rechter "staart" van de verdeling zitten.
+
+Bij symmetrische, unimodale verdelingen zijn HPDI en CPI hetzelfde (zie eerste figuur hieronder).
+Anders kan er best wel wat verschil zitten tussen beide intervallen (zie figuur 2 en 3 hieronder).
+
+```{r, purl = FALSE}
+# specify a unimodal, symmetric distribution
+unimodal <- data.frame(
+  x = seq(10, 50)
+) %>%
+  mutate(prob = dnorm(x, mean = 30, sd = 5),
+        cum_sum = pnorm(x, mean = 30, sd = 5))
+limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI"),
+                     x = c(13, 46, 13, 46))
+
+p1 <- ggplot(unimodal) +
+  geom_line(aes(x = x, y = prob)) +
+  geom_vline(data = limits, aes(xintercept = x, color = type, lty = type),
+             alpha = 0.5)
+
+# specify a bimodal distribution
+bimodal <- data.frame(
+  x = seq(0, 50, 0.1)
+) %>%
+  mutate(prob = (dnorm(x, mean = 32, sd = 4) +
+           dnorm(x, mean = 12, sd = 2))/2,
+        cum_sum = (pnorm(x, mean = 32, sd = 4) + pnorm(x, mean = 12, sd = 2))/2)
+measures <- data.frame(measures = c("mean", "mode", "median"),
+                       x = c(weighted.mean(x = bimodal$x, w = bimodal$prob),
+                             12, 18.7))
+limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI", "HPDI", "HPDI"),
+                     x = c(9.5, 37, 7.9, 16.1, 25.4, 38.5))
+p2 <- ggplot(bimodal) +
+  geom_vline(data = limits %>% filter(type == "HPDI"), aes(xintercept = x)) +
+  geom_bar(data = bimodal %>%
+             filter((x >= 7.9 & x <= 16.1) | (x >= 25.4 & x <= 38.5)),
+           aes(x = x, y = prob),
+           stat = "identity", color = "grey", fill = "grey") +
+  ggtitle("highest posterior density interval for a bimodal distribution") +
+  geom_line(aes(x = x, y = prob)) + 
+  geom_vline(data = measures, aes(xintercept = x), color = "red") +
+  geom_text(data = measures,
+            aes(label = measures, x = x, y = c(0.1, 0.09, 0.08)), color = "red")
+p3 <- ggplot(bimodal) +
+  geom_vline(data = limits %>% filter(type == "CPI"), aes(xintercept = x)) +
+  geom_bar(data = bimodal %>% filter(x >= 9.5 & x <= 37),
+           aes(x = x, y = prob),
+           stat = "identity", color = "grey", fill = "grey") +
+  ggtitle("equal tail credible interval for a bimodal distribution") +
+  geom_line(aes(x = x, y = prob))
+p1 
+```
+
+```{r, purl = FALSE}
+p2
+```
+```{r, purl = FALSE}
+p3
+```
+
+
+## Hypotheses testen
+Bayes' factor
 
 # Een model fitten met brms
+
 
 ## Dataset laden en data exploratie
 
 We laden een dataset in over het aantal mierensoorten in New England (USA). Typ `?ants` in de console voor meer info.
 
-```{r}
+```{r data-expl-laad-data}
 # Laad dataset in
 data(ants)
 
@@ -70,16 +309,16 @@ glimpse(ants_df)
 
 We hebben een aantal sites (`site`) waar het aantal soorten mieren geteld zijn (`sp_rich`). Enkele variabelen zijn aanwezig: `habitat`, `latitude` en hoogte (`elevation`). We bekijken enkele samenvattende statistieken. In elke site zijn 2 tellingen gedaan: in moeras (`bog`) en in bos (`forest`).
 
-```{r}
+
+```{r data-expl-summary}
 # Samenvattende statistieken dataset
 summary(ants_df)
 ```
 
 We visualiseren de data.
 
-Frequentie van het aantal soorten per habitat.
 
-```{r}
+```{r data-expl-vis1}
 # Frequentie aantal soorten per habitat
 ants_df %>%
   ggplot(aes(x = sp_rich)) +
@@ -88,9 +327,8 @@ ants_df %>%
     facet_wrap(~habitat)
 ```
 
-Verdeling van het aantal soorten per habitat.
 
-```{r}
+```{r data-expl-vis2}
 # Boxplots aantal soorten per habitat
 ants_df %>%
   ggplot(aes(y = sp_rich, x = habitat)) +
@@ -100,10 +338,9 @@ ants_df %>%
     scale_y_continuous(limits = c(0, NA))
 ```
 
-Relatie tussen het aantal soorten en latitude per habitat.
-
-```{r}
+```{r data-expl-vis3}
 # Scatter plot aantal soorten en latitude per habitat
+
 ants_df %>%
   ggplot(aes(y = sp_rich, x = latitude)) +
     geom_point() +
@@ -111,10 +348,9 @@ ants_df %>%
     facet_wrap(~habitat)
 ```
 
-Relatie tussen het aantal soorten en hoogte per habitat.
-
-```{r}
+```{r data-expl-vis4}
 # Scatter plot aantal soorten en hoogte per habitat
+
 ants_df %>%
   ggplot(aes(y = sp_rich, x = elevation)) +
     geom_point() +
@@ -144,7 +380,8 @@ We moeten dus drie parameters schatten: $\beta_0$, $\beta_1$ en $\sigma$. Hoe sp
 
 Eerst en vooral besluiten we welke MCMC parameters we zullen gebruiken. Typ `?brm` om te zien wat de standaard instellingen zijn voor deze parameters. Aangeraden is om meerdere chains te gebruiken (`nchains`) en deze parallel te laten lopen op verschillende cores van je computer (`nparallel`). Aangezien dat dit een relatief simpel model is, hebben we niet veel iteraties nodig en geen verdunning.
 
-```{r}
+
+```{r simpel-model-mcmc-par}
 # Instellen MCMC parameters
 nchains <- 3           # aantal chains
 niter <- 2000          # aantal iteraties (incl. burn-in, zie volgende)
@@ -159,7 +396,8 @@ Het model wordt gefit a.d.h.v. de `brm()` functie. De syntax is zeer gelijkaardi
 -   `prior` om prior distributies te voorzien. Indien deze niet gespecificeerd zijn, gebruikt de functie default (niet informatieve) priors. Het argument `sample_prior` kan gebruikt worden om van de prior te samplen zodat je kan visualiseren of de gebruikte prior voldoet aan je verwachtingen.
 -   `file` en `file_refit` om het model object op te slaan nadat het gefit is. Als je de code opnieuw runt en het model is al eens opgeslaan, dan zal `brm()` dit model gewoon inladen in plaats van het opnieuw te fitten.
 
-```{r}
+
+```{r simpel-model-fit-poisson}
 # Fit Normaal model
 fit_normal1 <- brm(
   formula = sp_rich ~ habitat, # beschrijving van het model
@@ -181,7 +419,8 @@ Er zijn verschillende manieren om convergentie van het MCMC algoritme voor elke 
 
 We kunnen de MCMC samples met de `as_draws()` functies verkrijgen ofwel ineens visualiseren via de [bayesplot](https://mc-stan.org/bayesplot/) package die compatibel is met brmsfit objecten.
 
-```{r}
+
+```{r simpel-model-colorscheme}
 # Zet kleurenpallet voor duidelijke visualisatie in bayesplot
 color_scheme_set("mix-blue-red")
 ```
@@ -207,7 +446,7 @@ as_draws_df(fit_normal1, variable = parameters) %>%
     facet_wrap(~parameter, nrow = 3, scales = "free")
 ```
 
-```{r}
+```{r simpel-model-trace}
 # Visualisatie via Bayesplot package
 mcmc_trace(fit_normal1, pars = parameters)
 ```
@@ -216,7 +455,7 @@ mcmc_trace(fit_normal1, pars = parameters)
 
 Naast een trace plot, kunnen we ook kijken hoe bepaalde statistieken zoals het gemiddelde of de kwantielen variëren over de tijd (= met toename aantal iteraties). Je wilt natuurlijk dat deze statistieken stabiliseren na een aantal iteraties want dan weet je dat je genoeg iteraties gebruikt hebt.
 
-```{r}
+```{r simpel-model-posterior-density}
 # code om cumulatieve kwantielen te berekenen
 # bron: https://rdrr.io/cran/cumstats/src/R/cumquant.R
 cumquant <- function(x, p) {
@@ -266,7 +505,8 @@ plot(fit_normal1)
 
 > uitleg Wat is autocorrelatie? thinning
 
-```{r}
+
+```{r simpel-model-rhat}
 # Visualisatie via Bayesplot package
 mcmc_acf(fit_normal1, pars = parameters)
 ```
@@ -666,6 +906,7 @@ fit_poisson2 %>%
                  fill = "cornflowerblue")
 ```
 
+
 # Vergelijking met frequentist statistics
 
 We gaan even terug naar ons allereerste model waarbij we de Normale verdeling gebruikten. Dit was equivalent aan een lineaire regressie met categorische variabele. Een lineaire regressie met categorische variabele wordt ook wel ANOVA genoemd en indien er maar twee groepen zijn is een ANOVA equivalent aan een t-test. We kunnen dus van de gelegenheid gebruik maken om de resultaten van ons eerst model (een Bayesiaans model) te vergelijken met de resultaten van een klassieke (frequentist) t-test.
@@ -691,3 +932,9 @@ t_test_normal1
 ```
 
 We zien dat dit inderdaad bijna exact dezelfde resultaten oplevert. Ons Bayesiaans model schat dat er gemiddeld `r round(verschil_moeras1, 3)` meer mierensoorten in bossen voorkomen dan in moerassen (95 % credible interval: `r round(ll_verschil_moeras1, 3)` tot `r round(ul_verschil_moeras1, 3)`). De t-test schat dat er gemiddeld `r round(verschil_moeras2, 3)` meer mierensoorten in bossen voorkomen dan in moerassen (95 % confidence interval: `r round(ll_verschil_moeras2, 3)` tot `r round(ul_verschil_moeras2, 3)`).
+
+
+# Referenties {-}
+
+- Ben Lambert heeft een [youtube kanaal](https://www.youtube.com/channel/UC3tFZR3eL1bDY8CqZDOQh-w) met a student's guide to Bayesian statistics, een [korte cursus](https://ben-lambert.com/biology/) en [uitgebreidde slides](https://ben-lambert.com/bayesian-lecture-slides/) over Bayesiaanse statistiek
+
