@@ -48,7 +48,33 @@ conflicted::conflict_prefer("rhat", "brms")
 
 In deze sectie herhalen we kort enkele basisprincipes van Bayesiaanse statistiek. 
 We verwijzen ook graag naar het infomoment van 24 oktober 2023 (zie [infomoment 24/10/2023](https://drive.google.com/drive/folders/1MIWu8-LnhTUnKKAchjI7FEmaJ8TN_1mb)).
-
+```{r, purl = FALSE}
+data.frame(
+  wat = c(
+   "interpretatie kans",
+   "gebruikte kennis",
+   "hypothesetest",
+   "terminologie",
+   "parameters en data"
+  ),
+  Frequentist = c(
+    "lange termijn relatieve frequentie",
+    "enkel data",
+    "kans op data die minstens even extreem is als de verzamelde data",
+    "p-waarde, confidence interval, type 1 en type 2 fout,...",
+    "parameters zijn vast en onbekend, data is random"
+  ),
+  Bayesiaans = c(
+    "relatieve waarschijnlijkheid",
+    "data en voorkennis (prior)",
+    "kans dat de hypothese klopt",
+    "prior, likelihood, posterior, credible interval,...",
+    "parameters zijn onzeker en hebben een verdeling, data ligt vast"
+  )
+) %>%
+  kable(booktabs = TRUE, 
+        col.names = c("", "Frequentist", "Bayesiaans"))
+```
 
 
 ### Statistische inferentie
@@ -65,7 +91,7 @@ Deze collectie van modellen noemen we de *likelihood*.
 In onderstaande figuur tonen we drie voorbeelden van een potentiele likelihood.
 Het zijn drie kansdichtheidsfunctie van Poisson verdelingen met steeds een andere parameter $\theta$.
 
-```{r}
+```{r, purl = FALSE}
 likelihood <- data.frame(x = rep(seq(0, 25), 3),
                          theta = c(rep(5, 26), rep(10, 26), rep(15, 26))) %>%
   mutate(prob = stats::dpois(x, lambda = theta),
@@ -179,7 +205,18 @@ Er zijn twee mogelijke oplossingen:
   - de conjugate priors beperken de vrijheid om je voorkennis voor te stellen. (bijvoorbeeld zero-inflation, )
 - *Sampling*: we krijgen informatie over de verdeling door eruit te samplen in plaats van het exact te berekenen.
 
-In Bayesiaanse inferentie zijn er verschillende mogelijkheden voor puntschattingen:
+#--------------------------------INSERT MCMC HERE------------------------------#
+laat ze zelf een chain runnen (buiten brms?)
+Chains, iterations, burn-in -> https://nicercode.github.io/guides/mcmc/
+Rhat
+Parallel running
+Stan
+Verschillende regels metropolis-hastings algoritme
+MCMC: vermeld verdunning (thinning), chains, burn-in, iterations
+#--------------------------------END MCMC HERE---------------------------------#
+
+
+Zodra we de posterior kennen, zijn er in Bayesiaanse inferentie verschillende mogelijkheden voor puntschattingen (zie ook figuren hieronder):
 
 - het posterior gemiddelde
 - de posterior mediaan
@@ -188,9 +225,9 @@ In Bayesiaanse inferentie zijn er verschillende mogelijkheden voor puntschatting
 Ook voor de weergave van onzekerheid zijn er verschillende opties:
 
 - Highest posterior density interval (HPDI): dit is interessant als het bijvoorbeeld belangrijk is om regio's met een lage densiteit te vermijden.
-- Equal-tailed credible interval = Central posterior interval (CPI): Voor de berekening van een ($1-\alpha$)% interval, zal er $\frac{\alpha}{2}$ in zowel de linker als rechter "staart" van de verdeling zitten.
+- Equal-tailed credible interval = Central posterior interval (CPI): Voor de berekening van een $100*(1-\alpha)$% interval, zal er $\frac{\alpha}{2}$ waarschijnlijkheid in zowel de linker als rechter "staart" van de verdeling zitten.
 
-Bij symmetrische, unimodale vverdelingen zijn HPDI en CPI hetzelfde (zie eerste figuur hieronder).
+Bij symmetrische, unimodale verdelingen zijn HPDI en CPI hetzelfde (zie eerste figuur hieronder).
 Anders kan er best wel wat verschil zitten tussen beide intervallen (zie figuur 2 en 3 hieronder).
 
 ```{r, purl = FALSE}
@@ -248,15 +285,6 @@ p2
 p3
 ```
 
-laat ze zelf een chain runnen (buiten brms?)
-Chains, iterations, burn-in -> https://nicercode.github.io/guides/mcmc/
-Rhat
-Parallel running
-Stan
-Verschillende regels metropolis-hastings algoritme
-MCMC: vermeld verdunning (thinning), chains, burn-in, iterations
-
-output: posterior, hpdi, credible interval, 
 
 # Een model fitten in brms
 ## Dataset laden en data exploratie
@@ -544,3 +572,8 @@ fit2 %>%
     stat_halfeye(point_interval = "median_qi", .width = 0.9, size = 2/3,
                  fill = "cornflowerblue")
 ```
+
+
+# Referenties {-}
+
+- Ben Lambert heeft een [youtube kanaal](https://www.youtube.com/channel/UC3tFZR3eL1bDY8CqZDOQh-w) met a student's guide to Bayesian statistics, een [korte cursus](https://ben-lambert.com/biology/) en [uitgebreidde slides](https://ben-lambert.com/bayesian-lecture-slides/) over Bayesiaanse statistiek
