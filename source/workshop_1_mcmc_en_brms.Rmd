@@ -30,8 +30,6 @@ library(GLMsData)  # datasets voor GLMs
 library(tidyverse) # gegevensverwerking en visualisatie
 library(brms)      # fitten van Bayesiaanse modellen
 library(bayesplot) # MCMC visualisatie en posterior predictive checks
-library(tidybayes) # nabewerking en visualisatie van Bayesiaanse modellen
-library(patchwork) # figuren combineren
 
 # Conflicten
 conflicted::conflicts_prefer(dplyr::filter)
@@ -48,15 +46,15 @@ conflicted::conflict_prefer("rhat", "brms")
 
 ## Wat is Bayesiaanse statistiek?
 
-In deze sectie leggen we kort enkele basisprincipes uit Bayesiaanse statistiek. 
+In deze sectie herhalen we kort enkele basisprincipes van Bayesiaanse statistiek. 
 We verwijzen ook graag naar het infomoment van 24 oktober 2023 (zie [infomoment 24/10/2023](https://drive.google.com/drive/folders/1MIWu8-LnhTUnKKAchjI7FEmaJ8TN_1mb)).
 
 
 
 ### Statistische inferentie
 
-Stel dat we geïnteresseerd zijn in het aantal soorten mieren dat voorkomt in een onderzoekssite van een vooraf gespecifieerde grootte.
-Aantallen worden vaak gespecifieerd door een Poisson verdeling aangezien deze verdeling enkel positieve gehele getallen aanneemt. 
+Stel dat we geïnteresseerd zijn in het aantal soorten mieren dat voorkomt in een onderzoekssite van een vooraf gespecificeerde grootte.
+Aantallen worden vaak gespecificeerd door een Poisson verdeling aangezien deze verdeling enkel positieve gehele getallen aanneemt. 
 
 $$ X \sim Poisson(\theta)$$
 met $x$ het aantal soorten mieren en $\theta$ de parameter die we willen schatten.
@@ -80,10 +78,9 @@ likelihood %>%
   ylab("kansdichtheid")
 ```
 
-
 Stel dat we op één bepaalde site 8 verschillende soorten mieren vinden.
 Onze likelihood leert ons dat er een oneindig aantal waarden zijn voor $\theta$ waarmee we de uitkomst 8 krijgen. 
-De figuur hieronder toont dat de kans op $X = 8$ verschillend is in ieder van de voorbeeld likelihoods.
+De figuur hieronder toont dat de kans op $X = 8$ verschillend is in ieder van de drie getoonde likelihoods.
 
 ```{r}
 likelihood %>%
@@ -98,8 +95,8 @@ likelihood %>%
 ```
 
 Ieder van deze modellen met steeds een andere waarde van $\theta$ kan ons de waarde van $x=8$ geven.
-Bij statistische inferentie willen we de likelihood eigenlijk inverteren door gebruik te maken van onze voorkennis en voorkennis (prior).
-Op deze manier hopen we te weten te komen welk van alle modellen het meeste zinvol/waarschijnlijk is.
+Bij statistische inferentie willen we de likelihood eigenlijk inverteren door gebruik te maken van onze voorkennis (prior).
+Op deze manier hopen we te weten te komen welk model van alle potentiele modellen het meeste zinvol/waarschijnlijk is.
 Zowel frequentist als bayesiaanse methoden inverteren in essentie $p(X|\theta) \rightarrow p(\theta|X)$ maar de methode verschilt.
 
 
@@ -118,9 +115,9 @@ De vuistregel in frequentist statistiek is dan:
 
 In onderstaande figuur staan de volgende kansen afgebeeld:
 
-- $p(X\geq8|\theta = 5)\simeq$`r 1 - round(likelihood %>% filter(x <= 8 & theta == 5) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 5 niet verwerpen.
-- $p(X\leq8|\theta = 10)\simeq$`r round(likelihood %>% filter(x <= 8 & theta == 10) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 10 niet verwerpen.
-- $p(X\leq8|\theta = 15)\simeq$`r round(likelihood %>% filter(x <= 8 & theta == 15) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is kleiner dan 0.05 dus we verwerpen de hypothese dat $\theta$ gelijk is aan 15.
+- $p(X\geq8|\theta = 5)\simeq$ `r 1 - round(likelihood %>% filter(x <= 8 & theta == 5) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 5 niet verwerpen.
+- $p(X\leq8|\theta = 10)\simeq$ `r round(likelihood %>% filter(x <= 8 & theta == 10) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 10 niet verwerpen.
+- $p(X\leq8|\theta = 15)\simeq$ `r round(likelihood %>% filter(x <= 8 & theta == 15) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is kleiner dan 0.05 dus we verwerpen de hypothese dat $\theta$ gelijk is aan 15.
 
 ```{r}
 likelihood %>%
@@ -136,7 +133,8 @@ likelihood %>%
   facet_grid(cols = vars(theta))
 ```
 
-Als we deze berekeningen herhalen voor verschillende waarden van $\theta^$, kunnen we ontdekken dat het 90% confidence interval (5% langs beiden kanten) gelijk is aan $4.0 \leq \theta \leq 14.4$.
+Als we deze berekeningen herhalen voor verschillende waarden van $\theta$, kunnen we ontdekken dat het 90% confidence interval (5% langs beiden kanten) gelijk is aan $4.0 \leq \theta \leq 14.4$.
+De beslissingsruimte voor de parameter $\theta$ wordt dus opgedeeld in twee delen; waarden die waarschijnlijk zijn en waarden die niet waarschijnlijk zijn.
 
 **Bayesiaanse inferentie**
 
@@ -145,72 +143,20 @@ Bij Bayesiaanse inferentie wordt Bayes' rule gebruikt:
 $$
 p(\theta|X) = \frac{p(X|\theta) * p(\theta)}{p(X)}
 $$
-Dit zorgt er voor dat we voor iedere potentiele waarde van $\theta$ een waarschijnlijkheid zal hebben. De parameters hebben bij Bayesiaanse modellen dus een verdeling. Dit staat in contrast met frequentist inferentie waar de oplossingsruimte voor $\theta$ opgesplitst wordt in twee delen: waarden die niet of wel potentieel de *echte* waarde zijn.
+Dit zorgt er voor dat we voor iedere potentiele waarde van $\theta$ een waarschijnlijkheid zullen hebben.
+De parameters hebben bij Bayesiaanse modellen dus een verdeling.
+Dit staat in contrast met frequentist inferentie waar de oplossingsruimte voor $\theta$ opgesplitst wordt in twee delen: waarden die niet of wel waarschijnlijk zijn.
 
 In ons voorbeeld van het aantal soorten mieren is:
 
-- $\theta$ het aantal soorten mieren
+- $\theta$ het gemiddelde aantal soorten mieren
 - $X$ de data
 - $p(X|\theta)$ de *likelihood*
-- $p(\theta)$ is de *prior*
+- $p(\theta)$ de *prior*
 - De noemer $p(X)$ maakt exacte Bayesiaanse inferentie moeilijk en heeft verschillende interpretaties:
   - Vooraleer we data verzamelen, is dit de *prior predictive distribution*
-  - Als we data hebben, is dit een nummer dat de posterior normaliseert. Dit wordt *evidence* of *marginal likelihood genoemd.
+  - Als we data hebben, is dit een nummer dat de posterior normaliseert. Dit wordt *evidence* of *marginal likelihood* genoemd.
 - $p(\theta|X)$ is de *posterior*. Het is een waarschijnlijkheidsverdeling. Deze posterior is het startpunt voor alle verdere analyse in Bayesiaanse inferentie.
-
-```{r}
-# specify a unimodal, symmetric distribution
-unimodal <- data.frame(
-  x = seq(10, 50)
-) %>%
-  mutate(prob = dnorm(x, mean = 30, sd = 5),
-        cum_sum = pnorm(x, mean = 30, sd = 5))
-limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI"),
-                     x = c(13, 46, 13, 46))
-
-p1 <- ggplot(unimodal) +
-  geom_line(aes(x = x, y = prob)) +
-  geom_vline(data = limits, aes(xintercept = x, color = type, lty = type))
-
-# specify a bimodal distribution
-bimodal <- data.frame(
-  x = seq(0, 50, 0.1)
-) %>%
-  mutate(prob = (dnorm(x, mean = 32, sd = 4) +
-           dnorm(x, mean = 12, sd = 2))/2,
-        cum_sum = (pnorm(x, mean = 32, sd = 4) + pnorm(x, mean = 12, sd = 2))/2)
-measures <- data.frame(measures = c("mean", "mode", "median"),
-                       x = c(weighted.mean(x = bimodal$x, w = bimodal$prob),
-                             12, 18.7))
-limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI", "HPDI", "HPDI"),
-                     x = c(9.5, 37, 7.8, 16.1, 25.5, 38.5))
-p2 <- ggplot(bimodal) +
-  geom_vline(data = limits %>% filter(type == "HPDI"), aes(xintercept = x)) +
-  geom_bar(data = bimodal %>%
-             filter((x >= 7.8 & x <= 16.1) | (x >= 25.5 & x <= 38.5)),
-           aes(x = x, y = prob),
-           stat = "identity", color = "grey", fill = "grey") +
-  ggtitle("highest posterior density interval for a bimodal distribution") +
-  geom_line(aes(x = x, y = prob)) + 
-  geom_vline(data = measures, aes(xintercept = x), color = "red") +
-  geom_text(data = measures,
-            aes(label = measures, x = x, y = 0.1), color = "red")
-p3 <- ggplot(bimodal) +
-  geom_vline(data = limits %>% filter(type == "CPI"), aes(xintercept = x)) +
-  geom_bar(data = bimodal %>% filter(x >= 9.5 & x <= 37),
-           aes(x = x, y = prob),
-           stat = "identity", color = "grey", fill = "grey") +
-  ggtitle("equal tail credible interval for a bimodal distribution") +
-  geom_line(aes(x = x, y = prob))
-p1 
-```
-
-```{r}
-p2
-```
-```{r}
-p3
-```
 
 https://benlambertdotcom.files.wordpress.com/2019/03/bayesian-course-1-short.pdf
 
@@ -244,9 +190,63 @@ Ook voor de weergave van onzekerheid zijn er verschillende opties:
 - Highest posterior density interval (HPDI): dit is interessant als het bijvoorbeeld belangrijk is om regio's met een lage densiteit te vermijden.
 - Equal-tailed credible interval = Central posterior interval (CPI): Voor de berekening van een ($1-\alpha$)% interval, zal er $\frac{\alpha}{2}$ in zowel de linker als rechter "staart" van de verdeling zitten.
 
-Bij symmetrische, unimodale vverdelingen zijn HPDI en CPI hetzelfde. Anders kan er best wel wat verschil 
+Bij symmetrische, unimodale vverdelingen zijn HPDI en CPI hetzelfde (zie eerste figuur hieronder).
+Anders kan er best wel wat verschil zitten tussen beide intervallen (zie figuur 2 en 3 hieronder).
 
+```{r, purl = FALSE}
+# specify a unimodal, symmetric distribution
+unimodal <- data.frame(
+  x = seq(10, 50)
+) %>%
+  mutate(prob = dnorm(x, mean = 30, sd = 5),
+        cum_sum = pnorm(x, mean = 30, sd = 5))
+limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI"),
+                     x = c(13, 46, 13, 46))
 
+p1 <- ggplot(unimodal) +
+  geom_line(aes(x = x, y = prob)) +
+  geom_vline(data = limits, aes(xintercept = x, color = type, lty = type),
+             alpha = 0.5)
+
+# specify a bimodal distribution
+bimodal <- data.frame(
+  x = seq(0, 50, 0.1)
+) %>%
+  mutate(prob = (dnorm(x, mean = 32, sd = 4) +
+           dnorm(x, mean = 12, sd = 2))/2,
+        cum_sum = (pnorm(x, mean = 32, sd = 4) + pnorm(x, mean = 12, sd = 2))/2)
+measures <- data.frame(measures = c("mean", "mode", "median"),
+                       x = c(weighted.mean(x = bimodal$x, w = bimodal$prob),
+                             12, 18.7))
+limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI", "HPDI", "HPDI"),
+                     x = c(9.5, 37, 7.9, 16.1, 25.4, 38.5))
+p2 <- ggplot(bimodal) +
+  geom_vline(data = limits %>% filter(type == "HPDI"), aes(xintercept = x)) +
+  geom_bar(data = bimodal %>%
+             filter((x >= 7.9 & x <= 16.1) | (x >= 25.4 & x <= 38.5)),
+           aes(x = x, y = prob),
+           stat = "identity", color = "grey", fill = "grey") +
+  ggtitle("highest posterior density interval for a bimodal distribution") +
+  geom_line(aes(x = x, y = prob)) + 
+  geom_vline(data = measures, aes(xintercept = x), color = "red") +
+  geom_text(data = measures,
+            aes(label = measures, x = x, y = c(0.1, 0.09, 0.08)), color = "red")
+p3 <- ggplot(bimodal) +
+  geom_vline(data = limits %>% filter(type == "CPI"), aes(xintercept = x)) +
+  geom_bar(data = bimodal %>% filter(x >= 9.5 & x <= 37),
+           aes(x = x, y = prob),
+           stat = "identity", color = "grey", fill = "grey") +
+  ggtitle("equal tail credible interval for a bimodal distribution") +
+  geom_line(aes(x = x, y = prob))
+p1 
+```
+
+```{r, purl = FALSE}
+p2
+```
+```{r, purl = FALSE}
+p3
+```
 
 laat ze zelf een chain runnen (buiten brms?)
 Chains, iterations, burn-in -> https://nicercode.github.io/guides/mcmc/
