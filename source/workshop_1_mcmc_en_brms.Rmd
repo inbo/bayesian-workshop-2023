@@ -530,15 +530,6 @@ Dit zal de autocorrelatie reduceren maar natuurlijk ook het totaal aantal iterat
 mcmc_acf(fit_normal1, pars = parameters)
 ```
 
-**cross-correlation plot**
-
-> uitleg Wat is cross-correlatie?
-
-```{r simpel-model-crosscorrelation}
-# Visualisatie cross correlation via Bayesplot package
-mcmc_pairs(fit_normal1, pars = parameters,
-           off_diag_args = list(size = 1.5))
-```
 
 Naast visuele checks zijn er ook *diagnostische controles*.
 
