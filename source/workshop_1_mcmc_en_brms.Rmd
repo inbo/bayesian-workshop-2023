@@ -243,7 +243,8 @@ Een lineaire regressie met twee te schatten parameters:
 $$
 Y = \beta_0 + \beta_1 * X
 $$
-$ \beta_0 $ = intercept
+$\beta_0$ = intercept
+
 $\beta_1$ = helling
 
 
