@@ -255,7 +255,9 @@ df_data <- data.frame(y = y, x = x)
 ```
 
 ```{r}
-ggplot(df_data, aes(x = x, y = y)) + geom_point() + geom_smooth(method = "lm", se = TRUE)
+ggplot(df_data, aes(x = x, y = y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE)
 ```
 
 Een lineaire regressie met LM geeft:
