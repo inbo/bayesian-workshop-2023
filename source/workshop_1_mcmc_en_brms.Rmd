@@ -81,14 +81,14 @@ data.frame(
 Stel dat we geïnteresseerd zijn in het aantal soorten mieren dat voorkomt in een onderzoekssite van een vooraf gespecificeerde grootte.
 Aantallen worden vaak gespecificeerd door een Poisson verdeling aangezien deze verdeling enkel positieve gehele getallen aanneemt. 
 
-$$ X \sim Poisson(\theta)$$
-met $X$ het aantal soorten mieren en $\theta$ de parameter die we willen schatten.
-In een Poisson verdeling is er slechts één parameter; $\theta$ is gelijk aan het gemiddelde en de variantie van de verdeling.
-We kennen de echte waarde van $\theta$ niet *a priori*. 
-Ons model definieert een collectie van waarschijnlijkheidsmodellen (probability models); één voor iedere mogelijke waarde van $\theta$. 
+$$ X \sim Poisson(\lambda)$$
+met $X$ het aantal soorten mieren en $\lambda$ de parameter die we willen schatten.
+In een Poisson verdeling is er slechts één parameter; $\lambda$ is gelijk aan het gemiddelde en de variantie van de verdeling.
+We kennen de echte waarde van $\lambda$ niet *a priori*. 
+Ons model definieert een collectie van waarschijnlijkheidsmodellen (probability models); één voor iedere mogelijke waarde van $\lambda$. 
 Deze collectie van modellen noemen we de *likelihood*.
 In onderstaande figuur tonen we drie voorbeelden van een potentiele likelihood.
-Het zijn drie kansdichtheidsfunctie van een Poisson verdelingen met steeds een andere parameter $\theta$.
+Het zijn drie kansdichtheidsfunctie van een Poisson verdelingen met steeds een andere parameter $\lambda$.
 
 ```{r, purl = FALSE}
 likelihood <- data.frame(x = rep(seq(0, 25), 3),
@@ -104,8 +104,8 @@ likelihood %>%
 ```
 
 Stel dat we op één bepaalde site 8 verschillende soorten mieren vinden.
-Onze likelihood leert ons dat er een oneindig aantal waarden zijn voor $\theta$ waarmee we de uitkomst 8 krijgen. 
-De figuur hieronder toont dat de kans op $X = 8$ verschillend is in ieder van de drie getoonde likelihoods.
+Onze likelihood leert ons dat er een oneindig aantal waarden zijn voor $\lambda$ waarmee we de uitkomst 8 krijgen. 
+De figuur hieronder toont dat de kans op $X = 8$ verschillend is in ieder van de drie getoonde Poisson verdelingen.
 
 ```{r, purl = FALSE}
 likelihood %>%
@@ -119,29 +119,29 @@ likelihood %>%
   facet_grid(cols = vars(theta))
 ```
 
-Ieder van deze modellen met steeds een andere waarde van $\theta$ kan ons de waarde van $X=8$ geven.
-Bij statistische inferentie willen we de likelihood eigenlijk inverteren door gebruik te maken van onze voorkennis (prior).
+Ieder van deze modellen met steeds een andere waarde van $\lambda$ kan ons de waarde van $X=8$ geven.
+Bij statistische inferentie willen we de likelihood eigenlijk inverteren $p(X|\lambda) \rightarrow p(\lambda|X)$.
 Op deze manier hopen we te weten te komen welk model van alle potentiele modellen het meeste zinvol/waarschijnlijk is.
-Zowel frequentist als bayesiaanse methoden inverteren in essentie $p(X|\theta) \rightarrow p(\theta|X)$ maar de methode verschilt.
+Zowel frequentist als bayesiaanse methoden inverteren in essentie $p(X|\lambda) \rightarrow p(\lambda|X)$ maar de methode verschilt.
 
 
 **Frequentist inferentie**
 
 Bij frequentist inferentie definiëren we een hypothese over het data-genererende proces die we willen testen:
 
--$H_0:$ de hypothese $\theta$ is waar
--$H_1:$ de hypothese $\theta$ is niet waar
+-$H_0:$ de hypothese $\lambda$ is waar
+-$H_1:$ de hypothese $\lambda$ is niet waar
 
 De vuistregel in frequentist statistiek is dan:
 
-- als $P($data $X$ of extremer$|\theta) < 0.05$, dan is \theta niet waar  $\Rightarrow  P(\theta|X) = 0$
-- als $P($data $X$ of extremer$|\theta) \geq 0.05$, dan zou \theta kunnen waar zijn  $\Rightarrow P(\theta|X) = ?$
+- als $P($data $X$ of extremer$|\lambda) < 0.05$, dan is \lambda niet waar  $\Rightarrow  P(\lambda|X) = 0$
+- als $P($data $X$ of extremer$|\lambda) \geq 0.05$, dan zou \lambda kunnen waar zijn  $\Rightarrow P(\lambda|X) = ?$
 
 In onderstaande figuur staan de volgende kansen afgebeeld:
 
-- $p(X\geq8|\theta = 5)\simeq$ `r 1 - round(likelihood %>% filter(x <= 8 & theta == 5) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 5 niet verwerpen.
-- $p(X\leq8|\theta = 10)\simeq$ `r round(likelihood %>% filter(x <= 8 & theta == 10) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 10 niet verwerpen.
-- $p(X\leq8|\theta = 15)\simeq$ `r round(likelihood %>% filter(x <= 8 & theta == 15) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is kleiner dan 0.05 dus we verwerpen de hypothese dat $\theta$ gelijk is aan 15.
+- $p(X\geq8|\lambda = 5)\simeq$ `r 1 - round(likelihood %>% filter(x <= 8 & lambda == 5) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\lambda$ gelijk is aan 5 niet verwerpen.
+- $p(X\leq8|\lambda = 10)\simeq$ `r round(likelihood %>% filter(x <= 8 & lambda == 10) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\lambda$ gelijk is aan 10 niet verwerpen.
+- $p(X\leq8|\lambda = 15)\simeq$ `r round(likelihood %>% filter(x <= 8 & lambda == 15) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is kleiner dan 0.05 dus we verwerpen de hypothese dat $\lambda$ gelijk is aan 15.
 
 ```{r, purl = FALSE}
 likelihood %>%
@@ -157,34 +157,49 @@ likelihood %>%
   facet_grid(cols = vars(theta))
 ```
 
-Als we deze berekeningen herhalen voor verschillende waarden van $\theta$, kunnen we ontdekken dat het 90% confidence interval (5% langs beiden kanten) gelijk is aan $4.0 \leq \theta \leq 14.4$.
-De beslissingsruimte voor de parameter $\theta$ wordt dus opgedeeld in twee delen; waarden die waarschijnlijk zijn en waarden die niet waarschijnlijk zijn.
+Als we deze berekeningen herhalen voor verschillende waarden van $\lambda$, kunnen we ontdekken dat het 90% confidence interval (5% langs beiden kanten) gelijk is aan $4.0 \leq \lambda \leq 14.4$.
+De beslissingsruimte voor de parameter $\lambda$ wordt dus opgedeeld in twee delen; waarden die waarschijnlijk zijn en waarden die niet waarschijnlijk zijn.
 
 **Bayesiaanse inferentie**
 
 Bij Bayesiaanse inferentie wordt Bayes' rule gebruikt:
 
 $$
-p(\theta|X) = \frac{p(X|\theta) * p(\theta)}{p(X)}
+p(\lambda|X) = \frac{p(X|\lambda) * p(\lambda)}{p(X)}
 $$
 
-Dit zorgt er voor dat we voor iedere potentiele waarde van $\theta$ een waarschijnlijkheid zullen hebben.
+Dit zorgt er voor dat we voor iedere potentiele waarde van $\lambda$ een waarschijnlijkheid zullen hebben.
 De parameters hebben bij Bayesiaanse modellen dus een verdeling.
-Dit staat in contrast met frequentist inferentie waar de oplossingsruimte voor $\theta$ opgesplitst wordt in twee delen: waarden die niet of wel waarschijnlijk zijn.
+Dit staat in contrast met frequentist inferentie waar de oplossingsruimte voor $\lambda$ opgesplitst wordt in twee delen: waarden die niet of wel waarschijnlijk zijn.
 
 In ons voorbeeld van het aantal soorten mieren is:
 
-- $\theta$ het gemiddelde aantal soorten mieren
+- $\lambda$ het gemiddelde aantal soorten mieren
 - $X$ de data
-- $p(X|\theta)$ de *likelihood*
-- $p(\theta)$ de *prior*
+- $p(X|\lambda)$ de *likelihood*
+- $p(\lambda)$ de *prior*
 - De noemer $p(X)$ maakt exacte Bayesiaanse inferentie moeilijk en heeft verschillende interpretaties:
   - Vooraleer we data verzamelen, is dit de *prior predictive distribution*
   - Als we data hebben, is dit een nummer dat de posterior normaliseert. Dit wordt *evidence* of *marginal likelihood* genoemd.
-- $p(\theta|X)$ is de *posterior*. Het is een waarschijnlijkheidsverdeling. Deze posterior is het startpunt voor alle verdere analyse in Bayesiaanse inferentie.
+- $p(\lambda|X)$ is de *posterior*. Het is een waarschijnlijkheidsverdeling. Deze posterior is het startpunt voor alle verdere analyse in Bayesiaanse inferentie.
 
 
 Op deze [website](https://iupbsapps.shinyapps.io/KruschkeFreqAndBayesApp/) vind je een mooie illustratie van hoe prior en likelihood gecombineerd worden om tot een posterior te komen ([tutorial](https://jkkweb.sitehost.iu.edu/KruschkeFreqAndBayesAppTutorial.html)).
+
+**Een makkelijker voorbeeld van Bayes' rule**
+
+Stel dat je bij de dokter komt en hij zegt dat je positief test voor een zeldzame ziekte.
+Hij vertelt je echter ook dat de test niet altijd te vertrouwen is. 
+In België heeft 0.1% van alle mensen de ziekte echt.
+Indien je de ziekte hebt, is de test positief in $\frac{99}{100}$ testen. Maar ook indien je de ziekte niet hebt, zal de test positief zijn in $\frac{5}{100}$ testen. 
+Je wil graag weten wat de kans is dat je de ziekte ook echt hebt, gegeven die positieve test en gebruikt Bayes theorema en de "Law of total probability":
+
+$$
+p(\text{je hebt de ziekte}|T^+) = \frac{p(T^+|\text{je hebt de ziekte})*p(\text{je hebt de ziekte})}{p(T^+)} \\
+= \frac{p(T^+|\text{je hebt de ziekte})*p(\text{je hebt de ziekte})}{p(T^+|\text{je hebt de ziekte})*p(\text{je hebt de ziekte}) + p(T^+|\text{je hebt de ziekte niet})* p(\text{je hebt de ziekte niet)}}\\
+=\frac{0.99*0.001}{0.99*0.001 + 0.05*0.9999}\\
+=1.94\%
+$$
 
 
 ## Parameterschatting in Bayesiaanse statistiek
@@ -192,7 +207,7 @@ Op deze [website](https://iupbsapps.shinyapps.io/KruschkeFreqAndBayesApp/) vind 
 
 Herinner Bayes' rule:
 $$
-p(\theta|X) = \frac{p(X|\theta) * p(\theta)}{p(X)}
+p(\lambda|X) = \frac{p(X|\lambda) * p(\lambda)}{p(X)}
 $$
 
 We vermeldden eerder reeds dat de noemer hier heel moeilijk is om te berekenen.
