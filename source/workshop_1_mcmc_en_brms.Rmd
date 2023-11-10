@@ -213,7 +213,7 @@ De posterior distributie kan je vergelijken met een berg. De top van de berg lig
 
 Een MCMC genereert een reeks van parameterwaarden aan de hand van een aantal regels die de sampler toelaat de hele range van de posterior distributie te exploreren. De regels zorgen ervoor dat de sampler de hele tijd in de buurt van de top van de berg blijft.
 
-Een MCMC is een random wandeling in de parameterruimte in de omgeving waar de posterior distributie het hoogst is (de top van de berg). De grootte en de richting van de stap varieert.
+MCMC is een random wandeling in de parameterruimte in de omgeving waar de posterior distributie het hoogst is (de top van de berg). De grootte en de richting van de stap varieert.
 
 Bij een stap bergop gaat de MCMC altijd door. Is de stap bergaf, dan gaat de MCMC niet altijd door. De kans om bergaf te gaan hangt af van hoe diep de stap naar beneden is. Kleine stapjes naar beneden worden vaak genomen. Bij diepe stappen naar benenden blijft de MCMC meestal staan en kiest de MCMC vervolgens een nieuwe stap.
 
