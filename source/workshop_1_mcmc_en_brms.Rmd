@@ -231,7 +231,7 @@ Een eenvoudig MCMC-algoritme is het Metropolis algoritme. Het wordt beschreven d
 6. Is de likelihood voor de nieuwe posterior $<$ huidige posterior $\Rightarrow$
    a) Bereken de ratio (nieuwe posterior / vorige posterior).
    b) Aanvaard de nieuwe waarde met een kans gelijk aan de ratio. (dus hoe lager de nieuwe likelihood hoe kleiner de kans op aanvaarden. 
-7. Doorloop 3 to 6 (enkele duizenden keren).
+7. Doorloop 3 tot 6 (enkele duizenden keren).
 
 Het is doordat de kans om parameterwaarden met een lagere likelihood te selecteren varieert met de ratio van de likelihoods dat de MCMC in de limiet (na heel veel iteraties) een correcte afspiegeling is van de posterior distributie. 
 
