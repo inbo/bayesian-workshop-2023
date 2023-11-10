@@ -11,7 +11,7 @@ output:
     toc_collapsed: true
 ---
 
-```{r setup, include = FALSE}
+```{r setup, include = FALSE, purl = FALSE}
 # Set up
 library(knitr)
 library(here)
@@ -24,7 +24,6 @@ opts_knit$set(root.dir = here())
 
 ```{r packages}
 # Packages
-library(gridExtra) # om figuren samen te voegen
 library(GLMsData)  # datasets voor GLMs
 library(tidyverse) # gegevensverwerking en visualisatie
 library(brms)      # fitten van Bayesiaanse modellen
@@ -48,6 +47,7 @@ conflicted::conflict_prefer("rhat", "brms")
 
 In deze sectie herhalen we kort enkele basisprincipes van Bayesiaanse statistiek. 
 We verwijzen ook graag naar het infomoment van 24 oktober 2023 (zie [infomoment 24/10/2023](https://drive.google.com/drive/folders/1MIWu8-LnhTUnKKAchjI7FEmaJ8TN_1mb)).
+
 ```{r, purl = FALSE}
 data.frame(
   wat = c(
@@ -61,14 +61,14 @@ data.frame(
     "lange termijn relatieve frequentie",
     "enkel data",
     "kans op data die minstens even extreem is als de verzamelde data",
-    "p-waarde, confidence interval, type 1 en type 2 fout,...",
+    "p-waarde, confidence interval, type 1 en type 2 fout ...",
     "parameters zijn vast en onbekend, data is random"
   ),
   Bayesiaans = c(
     "relatieve waarschijnlijkheid",
     "data en voorkennis (prior)",
     "kans dat de hypothese klopt",
-    "prior, likelihood, posterior, credible interval,...",
+    "prior, likelihood, posterior, credible interval ...",
     "parameters zijn onzeker en hebben een verdeling, data ligt vast"
   )
 ) %>%
@@ -88,7 +88,7 @@ In een Poisson verdeling is er slechts één parameter; $\theta$ is gelijk aan h
 We kennen de echte waarde van $\theta$ niet *a priori*. 
 Ons model definieert een collectie van waarschijnlijkheidsmodellen (probability models); één voor iedere mogelijke waarde van $\theta$. 
 Deze collectie van modellen noemen we de *likelihood*.
-In onderstaande figuur tonen we drie voorbeelden van een potentiele likelihood.
+In onderstaande figuur tonen we drie voorbeelden van een potentiële likelihood.
 Het zijn drie kansdichtheidsfunctie van een Poisson verdelingen met steeds een andere parameter $\theta$.
 
 ```{r, purl = FALSE}
@@ -122,27 +122,30 @@ likelihood %>%
 
 Ieder van deze modellen met steeds een andere waarde van $\theta$ kan ons de waarde van $X=8$ geven.
 Bij statistische inferentie willen we de likelihood eigenlijk inverteren door gebruik te maken van onze voorkennis (prior).
-Op deze manier hopen we te weten te komen welk model van alle potentiele modellen het meeste zinvol/waarschijnlijk is.
-Zowel frequentist als bayesiaanse methoden inverteren in essentie $p(X|\theta) \rightarrow p(\theta|X)$ maar de methode verschilt.
+Op deze manier hopen we te weten te komen welk model van alle potentiële modellen het meeste zinvol/waarschijnlijk is.
+Zowel frequentist als Bayesiaanse methoden inverteren in essentie $p(X|\theta) \rightarrow p(\theta|X)$ maar de methode verschilt.
 
 
 **Frequentist inferentie**
 
 Bij frequentist inferentie definiëren we een hypothese over het data-genererende proces die we willen testen:
 
--$H_0:$ de hypothese $\theta$ is waar
--$H_1:$ de hypothese $\theta$ is niet waar
+-  $H_0:$ de hypothese $\theta$ is waar
+-  $H_1:$ de hypothese $\theta$ is niet waar
 
 De vuistregel in frequentist statistiek is dan:
 
 - als $P($data $X$ of extremer$|\theta) < 0.05$, dan is \theta niet waar  $\Rightarrow  P(\theta|X) = 0$
-- als $P($data $X$ of extremer$|\theta) \geq 0.05$, dan zou \theta kunnen waar zijn  $\Rightarrow P(\theta|X) = ?$
+- als $P($data $X$ of extremer$|\theta) \geq 0.05$, dan zou \theta kunnen waar zijn  $\Rightarrow P(\theta|X) = \text{?}$
 
 In onderstaande figuur staan de volgende kansen afgebeeld:
 
-- $p(X\geq8|\theta = 5)\simeq$ `r 1 - round(likelihood %>% filter(x <= 8 & theta == 5) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 5 niet verwerpen.
-- $p(X\leq8|\theta = 10)\simeq$ `r round(likelihood %>% filter(x <= 8 & theta == 10) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 10 niet verwerpen.
-- $p(X\leq8|\theta = 15)\simeq$ `r round(likelihood %>% filter(x <= 8 & theta == 15) %>% dplyr::pull(prob) %>% sum(), 3)` Dit is kleiner dan 0.05 dus we verwerpen de hypothese dat $\theta$ gelijk is aan 15.
+- $p(X\geq8|\theta = 5)\simeq$ `r 1 - round(likelihood %>% filter(x <= 8 & theta == 5) %>% dplyr::pull(prob) %>% sum(), 3)`\
+  Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 5 niet verwerpen.
+- $p(X\leq8|\theta = 10)\simeq$ `r round(likelihood %>% filter(x <= 8 & theta == 10) %>% dplyr::pull(prob) %>% sum(), 3)`\
+  Dit is groter dan 0.05 dus we kunnen de hypothese dat $\theta$ gelijk is aan 10 niet verwerpen.
+- $p(X\leq8|\theta = 15)\simeq$ `r round(likelihood %>% filter(x <= 8 & theta == 15) %>% dplyr::pull(prob) %>% sum(), 3)`\
+  Dit is kleiner dan 0.05 dus we verwerpen de hypothese dat $\theta$ gelijk is aan 15.
 
 ```{r, purl = FALSE}
 likelihood %>%
@@ -150,7 +153,7 @@ likelihood %>%
   geom_point() + 
   geom_errorbar(aes(ymin = 0, ymax = prob), width = 0) +
   geom_bar(data = likelihood %>%
-             filter((x <= 8 & theta %in% c(10,15))|
+             filter((x <= 8 & theta %in% c(10,15)) |
                       (x >= 8 & theta == 5)),
            color = "grey", stat = "identity", alpha = 0.7) + 
   xlab("aantal soorten mieren in een site") + 
@@ -159,7 +162,7 @@ likelihood %>%
 ```
 
 Als we deze berekeningen herhalen voor verschillende waarden van $\theta$, kunnen we ontdekken dat het 90% confidence interval (5% langs beiden kanten) gelijk is aan $4.0 \leq \theta \leq 14.4$.
-De beslissingsruimte voor de parameter $\theta$ wordt dus opgedeeld in twee delen; waarden die waarschijnlijk zijn en waarden die niet waarschijnlijk zijn.
+De beslissingsruimte voor de parameter $\theta$ wordt dus opgedeeld in twee delen: (1) waarden die waarschijnlijk zijn en (2) waarden die niet waarschijnlijk zijn.
 
 **Bayesiaanse inferentie**
 
@@ -169,7 +172,7 @@ $$
 p(\theta|X) = \frac{p(X|\theta) * p(\theta)}{p(X)}
 $$
 
-Dit zorgt er voor dat we voor iedere potentiele waarde van $\theta$ een waarschijnlijkheid zullen hebben.
+Dit zorgt er voor dat we voor iedere potentiële waarde van $\theta$ een waarschijnlijkheid zullen hebben.
 De parameters hebben bij Bayesiaanse modellen dus een verdeling.
 Dit staat in contrast met frequentist inferentie waar de oplossingsruimte voor $\theta$ opgesplitst wordt in twee delen: waarden die niet of wel waarschijnlijk zijn.
 
@@ -201,7 +204,7 @@ Er zijn twee mogelijke oplossingen:
 
 - *Conjugate priors*: Voor sommige verdelingen en combinaties van priors en likelihoods is het mogelijk om toch een analytische oplossing te krijgen (zie [deze lijst](https://en.wikipedia.org/wiki/Conjugate_prior)). Dit beperkt echter onze mogelijkheden:
   - enkel mogelijk voor enkele univariate en bivariate problemen
-  - de conjugate priors beperken de vrijheid om je voorkennis voor te stellen. (bijvoorbeeld zero-inflation, )
+  - de conjugate priors beperken de vrijheid om je voorkennis voor te stellen (bijvoorbeeld zero-inflation ...)
 - *Sampling*: we krijgen informatie over de verdeling door eruit te samplen in plaats van het exact te berekenen.
 
 #--------------------------------INSERT MCMC HERE------------------------------#
@@ -219,7 +222,7 @@ Zodra we de posterior kennen, zijn er in Bayesiaanse inferentie verschillende mo
 
 - het posterior gemiddelde
 - de posterior mediaan
-- maximum a posteriori (MAP) oftewel de mode. De mode kan soms ver van het gemiddelde en de mediaan liggen.
+- maximum a posteriori (MAP) oftewel de modus. De modus kan soms ver van het gemiddelde en de mediaan liggen.
 
 Ook voor de weergave van onzekerheid zijn er verschillende opties:
 
@@ -251,7 +254,7 @@ bimodal <- data.frame(
   mutate(prob = (dnorm(x, mean = 32, sd = 4) +
            dnorm(x, mean = 12, sd = 2))/2,
         cum_sum = (pnorm(x, mean = 32, sd = 4) + pnorm(x, mean = 12, sd = 2))/2)
-measures <- data.frame(measures = c("mean", "mode", "median"),
+measures <- data.frame(measures = c("gemiddelde", "modus", "mediaan"),
                        x = c(weighted.mean(x = bimodal$x, w = bimodal$prob),
                              12, 18.7))
 limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI", "HPDI", "HPDI"),
@@ -265,8 +268,9 @@ p2 <- ggplot(bimodal) +
   ggtitle("highest posterior density interval for a bimodal distribution") +
   geom_line(aes(x = x, y = prob)) + 
   geom_vline(data = measures, aes(xintercept = x), color = "red") +
-  geom_text(data = measures,
-            aes(label = measures, x = x, y = c(0.1, 0.09, 0.08)), color = "red")
+  geom_label(data = measures,
+            aes(label = measures, x = x, y = c(0.1, 0.09, 0.08)), fill = "red",
+            alpha = 0.5)
 p3 <- ggplot(bimodal) +
   geom_vline(data = limits %>% filter(type == "CPI"), aes(xintercept = x)) +
   geom_bar(data = bimodal %>% filter(x >= 9.5 & x <= 37),
@@ -515,10 +519,11 @@ Stel dat wel iedere tien minuten de temperatuur meten.
 De huidige temperatuur is zeer sterk gecorreleerd met de temperatuur van een half uur geleden, sterk gecorreleerd met de temperatuur van 2 uur geleden en zwakker gecorreleerd met de temperatuur 8 uur geleden.
 Om de posterior te ontdekken, zouden we een volledige random walk moeten doen door parameterruimte waar de locatie op iteratie $i$ volledig onafhankelijk is van de locatie op iteratie $i-1$.
 In een MCMC zal er vaak wel wat autocorrelatie zijn en het is belangrijk om te controleren of  deze autocorrelatie niet te groot is.
+De zgn. lag geeft aan hoeveel correlatie er is tussen waarden die 1, 2, 3 ... iteraties van elkaar verwijderd zijn.
 Autocorrelatie kan bijvoorbeeld het gevolg zijn van een slecht gekozen step size, een slecht gekozen start locatie, of multimodaliteit in de posterior.
 
 Indien er toch te veel autocorrelatie is, wordt er vaak gebruik gemaakt van verdunning (*thinning*) waarbij sommige iteraties worden verwijderd uit de chain.
-Dit zal de autocorrelatie reduceren maar natuurlijk ook het totaal aantal iteraties... 
+Dit zal de autocorrelatie reduceren maar natuurlijk ook het totaal aantal iteraties ... 
 
 
 ```{r simpel-model-autocorrelation}
@@ -526,15 +531,6 @@ Dit zal de autocorrelatie reduceren maar natuurlijk ook het totaal aantal iterat
 mcmc_acf(fit_normal1, pars = parameters)
 ```
 
-**cross-correlation plot**
-
-> uitleg Wat is cross-correlatie?
-
-```{r simpel-model-crosscorrelation}
-# Visualisatie cross correlation via Bayesplot package
-mcmc_pairs(fit_normal1, pars = parameters,
-           off_diag_args = list(size = 1.5))
-```
 
 Naast visuele checks zijn er ook *diagnostische controles*.
 
