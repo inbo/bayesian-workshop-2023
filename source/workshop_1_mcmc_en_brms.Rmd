@@ -265,24 +265,10 @@ Met betrouwbaarheidsinterval
 confint(lm1)
 ```
 
-Een functie om de (log) likelihood voor de data te berekenen 
-```{r}
-# Naar een source file
-ll.fun <- function(a, b, tau){
-  ll <- sum(dnorm(x = y, mean = a + b * x, sd = sqrt(1 / tau),log = TRUE))
-  return(ll)
-}
-```
+Een functie om de (log) likelihood voor de data te berekenen
 
-Een functie om de prior likelihood (niet informatief) te berekenen
 ```{r}
-# Naar een source file
-prior.fun <- function(a, b, tau){
-  lp <- dnorm(x = a, mean = 0, sd = sqrt(1/10^-6), log = TRUE) +
-    dnorm(x = b, mean = 0, sd = sqrt(1/10^-6), log = TRUE) +
-    dgamma(x = tau, shape = 0.001, rate = 0.001, log = TRUE)
-  return(lp)
-}
+source(file = "./source/mcmc_functions.R")
 ```
 
 Vermits het een eenvoudig model is met een kleine dataset, kunnen we de posterior likelihood voor een groot aantal verschillende combinaties uitrekenen
@@ -307,7 +293,6 @@ init1 <- c(15 , 2)  # startwaarden voor a en b
 ```
 
 ```{r}
-source(file = "C:/Users/toon_vandaele/Downloads/tijdelijk_mcmc_2_param.R")
 mcmc_small <- MCMC_metro(x = x, y = y, N = 100,
                          sigma = 1, init_a = 12, init_b = 6)
 ```
