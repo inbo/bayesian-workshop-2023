@@ -351,7 +351,12 @@ Trace plot
 
 ```{r}
 mcmc %>% 
-  ggplot(aes(x = iter, y = a)) + geom_line()
+  ggplot(aes(x = iter, y = a)) +
+  annotate("rect",  xmin = 0, xmax = 200, ymin = -Inf, ymax = +Inf,
+           alpha = 0.3, fill = "gold") +
+  annotate("label", label = "burn-in", x = 250, y = 12, hjust = "left",
+           fill = "gold") +
+  geom_line()
 ```
 
 
