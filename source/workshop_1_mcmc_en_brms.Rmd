@@ -24,7 +24,6 @@ opts_knit$set(root.dir = here())
 
 ```{r packages}
 # Packages
-library(gridExtra) # om figuren samen te voegen
 library(GLMsData)  # datasets voor GLMs
 library(tidyverse) # gegevensverwerking en visualisatie
 library(brms)      # fitten van Bayesiaanse modellen
