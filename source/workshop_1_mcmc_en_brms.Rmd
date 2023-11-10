@@ -211,7 +211,7 @@ MCMC staat voor 'Markov chain Monte Carlo'. We gaan niet dieper in op deze begri
 
 De posterior distributie kan je vergelijken met een berg. De top van de berg ligt waar de parameterwaarde het meest waarschijnlijk is na het combineren van de likelihood van je data met je prior (maximum likelihood). De ligging en de vorm van de bergtop is echter onbekend. Het doel van een MCMC-algoritme is op een efficiënte wijze de bergtop en de omgeving te verkennen. 
 
-Een MCMC genereert een reeks van parameterwaarden aan de hand van een aantal regels die de sampler toelaat de hele range van de posterior distributie te exploreren. De regels zorgen ervoor dat de sampler de hele tijd in de buurt van de top van de berg blijft.
+MCMC genereert een reeks van parameterwaarden aan de hand van een aantal regels die de sampler toelaat de hele range van de posterior distributie te exploreren. De regels zorgen ervoor dat de sampler de hele tijd in de buurt van de top van de berg blijft.
 
 MCMC is een random wandeling in de parameterruimte in de omgeving waar de posterior distributie het hoogst is (de top van de berg). De grootte en de richting van de stap varieert.
 
