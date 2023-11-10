@@ -244,7 +244,7 @@ $$
 Y = \beta_0 + \beta_1 * X
 $$
 $ \beta_0 $ = intercept
-$ \beta_1 $ = helling
+$\beta_1$ = helling
 
 
 Stel een dataset met 5 metingen van $X$ met respons $Y$. 
