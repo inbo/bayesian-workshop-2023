@@ -221,7 +221,7 @@ De absolute hoogte van de berg (posterior likelihood) doet er op zich niet toe. 
 
 ![Metropolis regels](../media/MCMC4b.png)
 
-Een eenvoudig MCMC algoritme is het Metropolis algoritme. Het wordt beschreven door deze formele regels:
+Een eenvoudig MCMC-algoritme is het Metropolis algoritme. Het wordt beschreven door deze formele regels:
 
 1. Kies een startwaarde voor de parameter
 2. Bereken voor die parameter de posterior likelihood (= prior + likelihood)
