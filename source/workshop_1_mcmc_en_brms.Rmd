@@ -227,7 +227,7 @@ Een eenvoudig MCMC algoritme is het Metropolis algoritme. Het wordt beschreven d
 2. Bereken voor die parameter de posterior likelihood (= prior + likelihood)
 3. Kies lukraak een nieuwe parameterwaarde, maar 'in de buurt' van de vorige
 4. Bereken de nieuwe posterior voor die nieuwe parameterwaarde
-5. Is de likelihood voor de nieuwe posterior > huidige posterior => nieuwe waarde behouden
+5. Is de likelihood voor de nieuwe posterior $>$ huidige posterior $\Rightarrow$ nieuwe waarde behouden
 6. Is de likelihood voor de nieuwe posterior < huidige posterior =>
    a) Bereken de ratio (nieuwe posterior / vorige posterior).
    b) Aanvaard de nieuwe waarde met een kans gelijk aan de ratio. (dus hoe lager de nieuwe likelihood hoe kleiner de kans op aanvaarden. 
