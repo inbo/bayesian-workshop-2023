@@ -1,11 +1,11 @@
 # Likelihood function
-ll.fun <- function(a, b, tau){
+ll.fun <- function(a, b, tau = 0.228){
   ll <- sum(dnorm(x = y, mean = a + b * x, sd = sqrt(1 / tau),log = TRUE))
   return(ll)
 }
 
 # prior function (uninformative)
-prior.fun <- function(a, b, tau){
+prior.fun <- function(a, b, tau = 0.228){
   lp <- dnorm(x = a, mean = 0, sd = sqrt(1/10^-6), log = TRUE) +
     dnorm(x = b, mean = 0, sd = sqrt(1/10^-6), log = TRUE) +
     dgamma(x = tau, shape = 0.001, rate = 0.001, log = TRUE)

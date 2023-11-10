@@ -209,17 +209,19 @@ Er zijn twee mogelijke oplossingen:
 
 MCMC staat voor 'Monte Carlo' 'Markov Chain'. We gaan niet dieper in op deze begrippen. Gaandeweg wordt wel duidelijk wat hiermee wordt bedoeld.
 
-De likelihood heeft de vorm van een berg. De top van de berg geeft aan wat de meest waarschijnlijke waarde van de parameter is.
+De posterior distributie kan je vergelijken met een berg. De top van de berg ligt waar de parameterwaarde het meest waarschijnlijk is (maximum likelihood). De ligging en de vorm van de bergtop is echter onbekend. Het doel van een MCMC algortime is op een efficiënte wijze de bergtop en de omgeving te verkennen. 
 
-MCMC genereert een reeks van parameterwaarden aan de hand van een aantal regels die de sampler toelaat de hele range van de posterior distributie te exploreren. De regels zorgen ervoor dat de sampler de hele tijd in de buurt van de top van de likelihood blijft.
+Een MCMC genereert een reeks van parameterwaarden aan de hand van een aantal regels die de sampler toelaat de hele range van de posterior distributie te exploreren. De regels zorgen ervoor dat de sampler de hele tijd in de buurt van de top van de berg blijft.
 
-De MCMC maakt een random wandeling in de omgeving van de 'likelihood' berg. Bij een  stap bergop gaat hij altijd door. Is de stap bergaf, dan gaat hij niet altijd door. De kans om door te gaan hangt af van hoe diep de stap naar beneden is. Kleine stapjes naar beneden worden vaak genomen. Bij diepe stappen naar benenden blijft de MCMC meestal staan.
+Een MCMC is een random wandeling in de parameterruimte in de omgeving waar de posterior distributie het hoogst is (de top van de berg). De grootte en de richting van de stap varieert.
 
-De absolute hoogte van de likelihood berg doet er niet toe. Enkel de relatieve verschillen.
+Bij een stap bergop gaat de MCMC altijd door. Is de stap bergaf, dan gaat de MCMC niet altijd door. De kans om bergaf te gaan hangt af van hoe diep de stap naar beneden is. Kleine stapjes naar beneden worden vaak genomen. Bij diepe stappen naar benenden blijft de MCMC meestal staan en kiest de MCMC vervolgens een nieuwe stap.
+
+De absolute hoogte van de berg (posterior likelihood) doet er op zich niet toe. Enkel de relatieve verschillen.
 
 ![Metropolis regels](../media/MCMC4b.png)
 
-De wandeling vertaald zich in volgende regels:
+Een eenvoudig MCMC algoritme is het Metropolis algoritme. Het wordt beschreven door deze formele regels:
 
 1. Kies een startwaarde voor de parameter
 2. Bereken voor die parameter de posterior likelihood (= prior + likelihood)
@@ -237,15 +239,18 @@ Het is doordat de kans om parameterwaarden met een lagere likelihood te selecter
 Voor eenvoudige gevallen is een MCMC opstellen niet zo complex. Hieronder een eenvoudig voorbeeld.
 
 Een lineaire regressie met twee te schatten parameters:
-$$ y = a + b *x $$
-a = intercept
-b = helling
 
-Voor een dataset met 5 metingen 
+$$
+Y = \beta_0 + \beta_1 * X
+$$
+$ \beta_0 $ = intercept
+$ \beta_1 $ = helling
+
+
+Stel een dataset met 5 metingen van $X$ met respons $Y$. 
 ```{r}
 y <- c(1.3, 5.2, 9.7, 12.8, 14.9)
 x <- c(-2.2, -1.3, 0.3, 2.1, 4.9)
-
 df_data <- data.frame(y = y, x = x)
 ```
 
@@ -258,6 +263,7 @@ Een lineaire regressie met LM geeft:
 ```{r}
 lm1 <- lm(formula = y ~ x, data = df_data)
 summary(lm1)
+# output beperken
 ```
 
 Met betrouwbaarheidsinterval
@@ -265,7 +271,7 @@ Met betrouwbaarheidsinterval
 confint(lm1)
 ```
 
-Een functie om de (log) likelihood voor de data te berekenen
+We lezen enkele korte functies in om de (log) likelihood voor dit model te berekenen en het MCMC metropolis algoritme uit te voeren.
 
 ```{r}
 source(file = "./source/mcmc_functions.R")
@@ -274,10 +280,11 @@ source(file = "./source/mcmc_functions.R")
 Vermits het een eenvoudig model is met een kleine dataset, kunnen we de posterior likelihood voor een groot aantal verschillende combinaties uitrekenen
 
 ```{r}
-df <- expand.grid(a = seq(-1, 15, 0.5), b = seq(-3, 8, 0.5), tau = 5)
+df <- expand.grid(a = seq(-1, 15, 0.5), b = seq(-3, 8, 0.5))
 df$post <- NA
 for (i in 1:nrow(df)) {
-  df[i,"post"] <- ll.fun(a = df[i,1], b = df[i,2], tau = 0.5) + prior.fun(a = df[i,1], b = df[i,2], tau  = 0.5)
+  df[i,"post"] <- ll.fun(a = df[i,1], b = df[i,2]) +
+    prior.fun(a = df[i,1], b = df[i,2])
 }
 ```
 
@@ -287,14 +294,16 @@ ggplot(df, aes(x = a, y = b, z = post)) +
   scale_fill_gradientn(colours = rainbow(n = 4))
 ```
 
-We kiezen nu een startwaarde voor a en b
+We kiezen nu een startwaarde voor $ \beta_0 $  en $\beta_1$ 
 ```{r}
-init1 <- c(15 , 2)  # startwaarden voor a en b
+beta_0 <- 12
+beta_1 <- 6
 ```
 
 ```{r}
 mcmc_small <- MCMC_metro(x = x, y = y, N = 100,
-                         sigma = 1, init_a = 12, init_b = 6)
+                         sigma = 1,
+                         init_a = beta_0, init_b = beta_1)
 ```
 
 ```{r}
@@ -338,18 +347,23 @@ gridExtra::grid.arrange(p2, ggplot(), p1, p3, ncol = 2, nrow = 2, widths=c(4, 1)
 
 ```
 
+Trace plot
+
 ```{r}
 mcmc %>% 
   ggplot(aes(x = iter, y = a)) + geom_line()
 ```
 
 
-Chains, iterations, burn-in -> https://nicercode.github.io/guides/mcmc/
-Rhat
-Parallel running
-Stan
+Thinning
 
-MCMC: vermeld verdunning (thinning), chains, iterations
+Parallel chains
+
+ https://nicercode.github.io/guides/mcmc/
+
+Er bestaan heel wat meer gesofesticeerde samplers zoals WinBugs, Jags, Stan, ..., maar het principe is bij MCMC is steeds hetzelfde. 
+
+Het package 'brms' gebruikt standaard de stan sampler.
 
 
 Zodra we de posterior kennen, zijn er in Bayesiaanse inferentie verschillende mogelijkheden voor puntschattingen (zie ook figuren hieronder):
