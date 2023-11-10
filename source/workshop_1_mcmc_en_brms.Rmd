@@ -11,7 +11,7 @@ output:
     toc_collapsed: true
 ---
 
-```{r setup, include = FALSE}
+```{r setup, include = FALSE, purl = FALSE}
 # Set up
 library(knitr)
 library(here)
