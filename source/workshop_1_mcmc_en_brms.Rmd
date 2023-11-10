@@ -47,6 +47,7 @@ conflicted::conflict_prefer("rhat", "brms")
 
 In deze sectie herhalen we kort enkele basisprincipes van Bayesiaanse statistiek. 
 We verwijzen ook graag naar het infomoment van 24 oktober 2023 (zie [infomoment 24/10/2023](https://drive.google.com/drive/folders/1MIWu8-LnhTUnKKAchjI7FEmaJ8TN_1mb)).
+
 ```{r, purl = FALSE}
 data.frame(
   wat = c(
@@ -60,14 +61,14 @@ data.frame(
     "lange termijn relatieve frequentie",
     "enkel data",
     "kans op data die minstens even extreem is als de verzamelde data",
-    "p-waarde, confidence interval, type 1 en type 2 fout,...",
+    "p-waarde, confidence interval, type 1 en type 2 fout ...",
     "parameters zijn vast en onbekend, data is random"
   ),
   Bayesiaans = c(
     "relatieve waarschijnlijkheid",
     "data en voorkennis (prior)",
     "kans dat de hypothese klopt",
-    "prior, likelihood, posterior, credible interval,...",
+    "prior, likelihood, posterior, credible interval ...",
     "parameters zijn onzeker en hebben een verdeling, data ligt vast"
   )
 ) %>%
@@ -517,7 +518,7 @@ In een MCMC zal er vaak wel wat autocorrelatie zijn en het is belangrijk om te c
 Autocorrelatie kan bijvoorbeeld het gevolg zijn van een slecht gekozen step size, een slecht gekozen start locatie, of multimodaliteit in de posterior.
 
 Indien er toch te veel autocorrelatie is, wordt er vaak gebruik gemaakt van verdunning (*thinning*) waarbij sommige iteraties worden verwijderd uit de chain.
-Dit zal de autocorrelatie reduceren maar natuurlijk ook het totaal aantal iteraties... 
+Dit zal de autocorrelatie reduceren maar natuurlijk ook het totaal aantal iteraties ... 
 
 
 ```{r simpel-model-autocorrelation}
