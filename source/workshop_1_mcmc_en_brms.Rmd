@@ -203,15 +203,168 @@ Er zijn twee mogelijke oplossingen:
   - de conjugate priors beperken de vrijheid om je voorkennis voor te stellen. (bijvoorbeeld zero-inflation, )
 - *Sampling*: we krijgen informatie over de verdeling door eruit te samplen in plaats van het exact te berekenen.
 
-#--------------------------------INSERT MCMC HERE------------------------------#
-laat ze zelf een chain runnen (buiten brms?)
+## Parameterschatting met MCMC
+
+### Wat is MCMC?
+
+MCMC staat voor 'Monte Carlo' 'Markov Chain'. We gaan niet dieper in op deze begrippen. Gaandeweg wordt wel duidelijk wat hiermee wordt bedoeld.
+
+De likelihood heeft de vorm van een berg. De top van de berg geeft aan wat de meest waarschijnlijke waarde van de parameter is.
+
+MCMC genereert een reeks van parameterwaarden aan de hand van een aantal regels die de sampler toelaat de hele range van de posterior distributie te exploreren. De regels zorgen ervoor dat de sampler de hele tijd in de buurt van de top van de likelihood blijft.
+
+De MCMC maakt een random wandeling in de omgeving van de 'likelihood' berg. Bij een  stap bergop gaat hij altijd door. Is de stap bergaf, dan gaat hij niet altijd door. De kans om door te gaan hangt af van hoe diep de stap naar beneden is. Kleine stapjes naar beneden worden vaak genomen. Bij diepe stappen naar benenden blijft de MCMC meestal staan.
+
+De absolute hoogte van de likelihood berg doet er niet toe. Enkel de relatieve verschillen.
+
+![Metropolis regels](../media/MCMC4b.png)
+
+De wandeling vertaald zich in volgende regels:
+
+1. Kies een startwaarde voor de parameter
+2. Bereken voor die parameter de posterior likelihood (= prior + likelihood)
+3. Kies lukraak een nieuwe parameterwaarde, maar 'in de buurt' van de vorige
+4. Bereken de nieuwe posterior voor die nieuwe parameterwaarde
+5. Is de likelihood voor de nieuwe posterior > huidige posterior => nieuwe waarde behouden
+6. Is de likelihood voor de nieuwe posterior < huidige posterior =>
+   a) Bereken de ratio (nieuwe posterior / vorige posterior.
+   b) Aanvaard de nieuwe waarde met een kans gelijk aan de ratio. (dus hoe lager de nieuwe likelihood hoe kleiner de kans op aanvaarden. 
+7. Doorloop 3 to 6 (enkele duizenden keren).
+
+Het is doordat de kans om parameterwaarden met een lagere likelihood te selecteren varieert met de ratio van de likelihoods dat de MCMC in de limiet (na heel veel iteraties) een correcte afspiegeling is van de posterior distributie. 
+
+
+Voor eenvoudige gevallen is een MCMC opstellen niet zo complex. Hieronder een eenvoudig voorbeeld.
+
+Een lineaire regressie met twee te schatten parameters:
+$$ y = a + b *x $$
+a = intercept
+b = helling
+
+Voor een dataset met 5 metingen 
+```{r}
+y <- c(1.3, 5.2, 9.7, 12.8, 14.9)
+x <- c(-2.2, -1.3, 0.3, 2.1, 4.9)
+
+df_data <- data.frame(y = y, x = x)
+```
+
+```{r}
+ggplot(df_data, aes(x = x, y = y)) + geom_point() + geom_smooth(method = "lm", se = TRUE)
+```
+
+Een lineaire regressie met LM geeft:
+
+```{r}
+lm1 <- lm(formula = y ~ x, data = df_data)
+summary(lm1)
+```
+
+Met betrouwbaarheidsinterval
+```{r}
+confint(lm1)
+```
+
+Een functie om de (log) likelihood voor de data te berekenen 
+```{r}
+# Naar een source file
+ll.fun <- function(a, b, tau){
+  ll <- sum(dnorm(x = y, mean = a + b * x, sd = sqrt(1 / tau),log = TRUE))
+  return(ll)
+}
+```
+
+Een functie om de prior likelihood (niet informatief) te berekenen
+```{r}
+# Naar een source file
+prior.fun <- function(a, b, tau){
+  lp <- dnorm(x = a, mean = 0, sd = sqrt(1/10^-6), log = TRUE) +
+    dnorm(x = b, mean = 0, sd = sqrt(1/10^-6), log = TRUE) +
+    dgamma(x = tau, shape = 0.001, rate = 0.001, log = TRUE)
+  return(lp)
+}
+```
+
+Vermits het een eenvoudig model is met een kleine dataset, kunnen we de posterior likelihood voor een groot aantal verschillende combinaties uitrekenen
+
+```{r}
+df <- expand.grid(a = seq(-1, 15, 0.5), b = seq(-3, 8, 0.5), tau = 5)
+df$post <- NA
+for (i in 1:nrow(df)) {
+  df[i,"post"] <- ll.fun(a = df[i,1], b = df[i,2], tau = 0.5) + prior.fun(a = df[i,1], b = df[i,2], tau  = 0.5)
+}
+```
+
+```{r}
+ggplot(df, aes(x = a, y = b, z = post)) +
+  geom_raster(aes(fill = post)) + geom_contour(colour = "black") +
+  scale_fill_gradientn(colours = rainbow(n = 4))
+```
+
+We kiezen nu een startwaarde voor a en b
+```{r}
+init1 <- c(15 , 2)  # startwaarden voor a en b
+```
+
+```{r}
+source(file = "C:/Users/toon_vandaele/Downloads/tijdelijk_mcmc_2_param.R")
+mcmc_small <- MCMC_metro(x = x, y = y, N = 100,
+                         sigma = 1, init_a = 12, init_b = 6)
+```
+
+```{r}
+ggplot(df, aes(x = a, y = b, z = post)) +
+  geom_raster(aes(fill = post)) + geom_contour(binwidth = 20, colour = "black") +
+  scale_fill_gradientn(colours = rainbow(n = 4)) +
+  geom_path(data = mcmc_small, aes(x = a, y = b, z = NA), colour = "black") +
+  geom_point(data = mcmc_small, aes(x = a, y = b, z = NA), colour = "red") +
+  coord_cartesian(xlim = c(-1, 14.5), ylim = c(-3, 7)) +
+  theme(legend.position="none")
+```
+
+De startwaarde ligt ver van de maximale likelihood. Het duurt even voor de MCMC stabiliseert in de omgeving van de top van de berg. Daarom wordt het eerste deel van de MCMC nooit gebruikt. Dit is de 'burn-in'.
+
+```{r}
+mcmc <- MCMC_metro(x = x, y = y, N = 5000, sigma = 1, init_a = 12, init_b = 6)
+```
+
+```{r}
+p1 <- ggplot(df, aes(x = a, y = b, z = post)) +
+  geom_raster(aes(fill = post)) + geom_contour(binwidth = 20, colour = "black") +
+  scale_fill_gradientn(colours = rainbow(n = 4)) +
+  geom_path(data = mcmc, aes(x = a, y = b, z = NA), colour = "black") +
+  geom_point(data = mcmc, aes(x = a, y = b, z = NA), colour = "red") +
+  coord_cartesian(xlim = c(-1, 14.5), ylim = c(-3, 7)) +
+  theme(legend.position="none")
+
+p2 <- ggplot(data = mcmc, aes(x = a)) + geom_histogram(bins = 50) +
+  geom_vline(xintercept = quantile(mcmc$a, probs = c(0.05, 0.5, 0.95)), colour = "red") +
+  scale_x_continuous(limits = c(-1, 14.5), breaks = seq(-1, 14.5, 1)) +
+  theme(axis.title.x = element_blank())
+
+p3 <- ggplot(data = mcmc, aes(x = b)) + geom_histogram(bins = 50) +
+  geom_vline(xintercept = quantile(mcmc$b, probs = c(0.05, 0.5, 0.95)), colour = "red") +
+  coord_flip() + scale_x_continuous(limits = c(-3, 7), breaks = seq(-3, 7, 1)) +
+  theme(axis.title.y = element_blank())
+
+empty <- ggplot()
+
+gridExtra::grid.arrange(p2, ggplot(), p1, p3, ncol = 2, nrow = 2, widths=c(4, 1), heights=c(1, 4))
+
+```
+
+```{r}
+mcmc %>% 
+  ggplot(aes(x = iter, y = a)) + geom_line()
+```
+
+
 Chains, iterations, burn-in -> https://nicercode.github.io/guides/mcmc/
 Rhat
 Parallel running
 Stan
-Verschillende regels metropolis-hastings algoritme
-MCMC: vermeld verdunning (thinning), chains, burn-in, iterations
-#--------------------------------END MCMC HERE---------------------------------#
+
+MCMC: vermeld verdunning (thinning), chains, iterations
 
 
 Zodra we de posterior kennen, zijn er in Bayesiaanse inferentie verschillende mogelijkheden voor puntschattingen (zie ook figuren hieronder):
