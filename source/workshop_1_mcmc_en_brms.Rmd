@@ -94,11 +94,11 @@ Het zijn drie kansdichtheidsfunctie van een Poisson verdelingen met steeds een a
 
 ```{r, purl = FALSE}
 likelihood <- data.frame(x = rep(seq(0, 25), 3),
-                         theta = c(rep(5, 26), rep(10, 26), rep(15, 26))) %>%
-  mutate(prob = stats::dpois(x, lambda = theta),
-         theta = as.factor(theta))
+                         lambda = c(rep(5, 26), rep(10, 26), rep(15, 26))) %>%
+  mutate(prob = stats::dpois(x, lambda = lambda),
+         lambda = as.factor(lambda))
 likelihood %>%
-  ggplot(aes(x = x, y = prob, color = theta)) +
+  ggplot(aes(x = x, y = prob, color = lambda)) +
   geom_point() + 
   geom_errorbar(aes(ymin = 0, ymax = prob), width = 0) + 
   xlab("aantal soorten mieren in een site") + 
@@ -111,14 +111,14 @@ De figuur hieronder toont dat de kans op $X = 8$ verschillend is in ieder van de
 
 ```{r, purl = FALSE}
 likelihood %>%
-  ggplot(aes(x = x, y = prob, color = theta)) +
+  ggplot(aes(x = x, y = prob, color = lambda)) +
   geom_point() + 
   geom_errorbar(aes(ymin = 0, ymax = prob), width = 0) +
   geom_bar(data = likelihood %>% filter(x == 8),
            color = "grey", stat = "identity", alpha = 0.7) + 
   xlab("aantal soorten mieren in een site") + 
   ylab("kansdichtheid") +
-  facet_grid(cols = vars(theta))
+  facet_grid(cols = vars(lambda))
 ```
 
 Ieder van deze modellen met steeds een andere waarde van $\lambda$ kan ons de waarde van $X=8$ geven.
@@ -151,16 +151,16 @@ In onderstaande figuur staan de volgende kansen afgebeeld:
 
 ```{r, purl = FALSE}
 likelihood %>%
-  ggplot(aes(x = x, y = prob, color = theta)) +
+  ggplot(aes(x = x, y = prob, color = lambda)) +
   geom_point() + 
   geom_errorbar(aes(ymin = 0, ymax = prob), width = 0) +
   geom_bar(data = likelihood %>%
-             filter((x <= 8 & theta %in% c(10,15)) |
-                      (x >= 8 & theta == 5)),
+             filter((x <= 8 & lambda %in% c(10,15)) |
+                      (x >= 8 & lambda == 5)),
            color = "grey", stat = "identity", alpha = 0.7) + 
   xlab("aantal soorten mieren in een site") + 
   ylab("kansdichtheid") +
-  facet_grid(cols = vars(theta))
+  facet_grid(cols = vars(lambda))
 ```
 
 Als we deze berekeningen herhalen voor verschillende waarden van $\lambda$, kunnen we ontdekken dat het 90% confidence interval (5% langs beiden kanten) gelijk is aan $4.0 \leq \lambda \leq 14.4$.
