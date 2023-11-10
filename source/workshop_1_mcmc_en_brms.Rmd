@@ -207,7 +207,7 @@ Er zijn twee mogelijke oplossingen:
 
 ### Wat is MCMC?
 
-MCMC staat voor 'Monte Carlo' 'Markov Chain'. We gaan niet dieper in op deze begrippen. Gaandeweg wordt wel duidelijk wat hiermee wordt bedoeld.
+MCMC staat voor 'Markov chain Monte Carlo'. We gaan niet dieper in op deze begrippen. Gaandeweg wordt wel duidelijk wat hiermee wordt bedoeld.
 
 De posterior distributie kan je vergelijken met een berg. De top van de berg ligt waar de parameterwaarde het meest waarschijnlijk is (maximum likelihood). De ligging en de vorm van de bergtop is echter onbekend. Het doel van een MCMC algortime is op een efficiënte wijze de bergtop en de omgeving te verkennen. 
 
