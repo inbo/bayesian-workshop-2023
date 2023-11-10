@@ -236,7 +236,7 @@ Een eenvoudig MCMC-algoritme is het Metropolis algoritme. Het wordt beschreven d
 Het is doordat de kans om parameterwaarden met een lagere likelihood te selecteren varieert met de ratio van de likelihoods dat MCMC in de limiet (na heel veel iteraties) een correcte afspiegeling is van de posterior distributie. 
 
 
-Voor eenvoudige gevallen is een MCMC opstellen niet zo complex. Hieronder een eenvoudig voorbeeld.
+Voor eenvoudige gevallen is een MCMC-algoritme opstellen niet zo complex. Hieronder een eenvoudig voorbeeld.
 
 Een lineaire regressie met twee te schatten parameters:
 
