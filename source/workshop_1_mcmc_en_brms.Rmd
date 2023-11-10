@@ -233,7 +233,7 @@ Een eenvoudig MCMC-algoritme is het Metropolis algoritme. Het wordt beschreven d
    b) Aanvaard de nieuwe waarde met een kans gelijk aan de ratio. (dus hoe lager de nieuwe likelihood hoe kleiner de kans op aanvaarden. 
 7. Doorloop 3 tot 6 (enkele duizenden keren).
 
-Het is doordat de kans om parameterwaarden met een lagere likelihood te selecteren varieert met de ratio van de likelihoods dat de MCMC in de limiet (na heel veel iteraties) een correcte afspiegeling is van de posterior distributie. 
+Het is doordat de kans om parameterwaarden met een lagere likelihood te selecteren varieert met de ratio van de likelihoods dat MCMC in de limiet (na heel veel iteraties) een correcte afspiegeling is van de posterior distributie. 
 
 
 Voor eenvoudige gevallen is een MCMC opstellen niet zo complex. Hieronder een eenvoudig voorbeeld.
