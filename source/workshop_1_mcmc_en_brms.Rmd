@@ -130,8 +130,8 @@ Zowel frequentist als bayesiaanse methoden inverteren in essentie $p(X|\theta) \
 
 Bij frequentist inferentie definiëren we een hypothese over het data-genererende proces die we willen testen:
 
--$H_0:$ de hypothese $\theta$ is waar
--$H_1:$ de hypothese $\theta$ is niet waar
+-  $H_0:$ de hypothese $\theta$ is waar
+-  $H_1:$ de hypothese $\theta$ is niet waar
 
 De vuistregel in frequentist statistiek is dan:
 
