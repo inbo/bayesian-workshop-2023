@@ -519,6 +519,7 @@ Stel dat wel iedere tien minuten de temperatuur meten.
 De huidige temperatuur is zeer sterk gecorreleerd met de temperatuur van een half uur geleden, sterk gecorreleerd met de temperatuur van 2 uur geleden en zwakker gecorreleerd met de temperatuur 8 uur geleden.
 Om de posterior te ontdekken, zouden we een volledige random walk moeten doen door parameterruimte waar de locatie op iteratie $i$ volledig onafhankelijk is van de locatie op iteratie $i-1$.
 In een MCMC zal er vaak wel wat autocorrelatie zijn en het is belangrijk om te controleren of  deze autocorrelatie niet te groot is.
+De zgn. lag geeft aan hoeveel correlatie er is tussen waarden die 1, 2, 3 ... iteraties van elkaar verwijderd zijn.
 Autocorrelatie kan bijvoorbeeld het gevolg zijn van een slecht gekozen step size, een slecht gekozen start locatie, of multimodaliteit in de posterior.
 
 Indien er toch te veel autocorrelatie is, wordt er vaak gebruik gemaakt van verdunning (*thinning*) waarbij sommige iteraties worden verwijderd uit de chain.
