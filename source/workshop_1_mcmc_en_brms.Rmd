@@ -294,7 +294,7 @@ ggplot(df, aes(x = a, y = b, z = post)) +
   scale_fill_gradientn(colours = rainbow(n = 4))
 ```
 
-We kiezen nu een startwaarde voor $ \beta_0 $  en $\beta_1$ 
+We kiezen nu een startwaarde voor $\beta_0$  en $\beta_1$ 
 ```{r}
 beta_0 <- 12
 beta_1 <- 6
