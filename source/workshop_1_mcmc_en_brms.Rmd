@@ -76,10 +76,19 @@ data.frame(
         col.names = c("", "Frequentist", "Bayesiaans"))
 ```
 
+Waarom  zou je Bayesiaanse modellen willen gebruiken?
+
+- Alle frequentist modellen kan je ook benaderen door een Bayesiaans model, omgekeerd niet.
+- Complexere modellen met tijd- en ruimte-effecten of met differentiaal vergelijkingen (Ordinary Differential Equations, ODE).
+- Interpretatie soms makkelijker / intuïtiever.
+- Voor iedere parameter een volledige kansverdeling waardoor je hiermee makkelijk kan verder rekenen of simuleren.
+- Verschillende bronnen van data combineren in een geïntegreerd model.
+- Gekende data / conclusies / verwachtingen meenemen in je model m.b.v. een prior.
+
 
 ### Statistische inferentie
 
-Stel dat we geïnteresseerd zijn in het aantal soorten mieren dat voorkomt in een onderzoekssite van een vooraf gespecificeerde grootte.
+Stel dat we geïnteresseerd zijn in het aantal soorten mieren dat voorkomt in een onderzoekssite van een vooraf gespecificeerde oppervlakte.
 Aantallen worden vaak gespecificeerd door een Poisson verdeling aangezien deze verdeling enkel positieve gehele getallen aanneemt. 
 
 $$ X \sim Poisson(\lambda)$$
