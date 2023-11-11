@@ -88,6 +88,7 @@ Waarom  zou je Bayesiaanse modellen willen gebruiken?
 
 ### Statistische inferentie
 
+Statistische inferentie is trachten om iets te leren over een (populatie)parameter op basis van data.
 Stel dat we geïnteresseerd zijn in het aantal soorten mieren dat voorkomt in een onderzoekssite van een vooraf gespecificeerde oppervlakte.
 Aantallen worden vaak gespecificeerd door een Poisson verdeling aangezien deze verdeling enkel positieve gehele getallen aanneemt. 
 
@@ -98,7 +99,7 @@ We kennen de echte waarde van $\lambda$ niet *a priori*.
 Ons model definieert een collectie van waarschijnlijkheidsmodellen (probability models); één voor iedere mogelijke waarde van $\lambda$. 
 Deze collectie van modellen noemen we de *likelihood*.
 
-In onderstaande figuur tonen we drie voorbeelden van een potentiele likelihood.
+In onderstaande figuur tonen we drie voorbeelden van een potentiële likelihood.
 Het zijn drie kansdichtheidsfunctie van een Poisson verdelingen met steeds een andere parameter $\lambda$.
 
 ```{r, purl = FALSE}
@@ -130,11 +131,33 @@ likelihood %>%
   facet_grid(cols = vars(lambda))
 ```
 
-Ieder van deze modellen met steeds een andere waarde van $\lambda$ kan ons de waarde van $X=8$ geven.
+Ieder van deze modellen, met steeds een andere waarde van $\lambda$, kan ons de waarde van $X=8$ geven.
+
+De likelihood functie geeft ons, voor iedere pontentiële waarde van de parameter, de kans op de data.
+De figuur hieronder toont dit voor onze data met slechts één observatie $X=8$.
+
+```{r, purl = FALSE}
+ll <- data.frame(lambda = seq(0, 20, 0.2)) %>%
+  mutate(likelihood = dpois(8, lambda))
+ll %>%
+  ggplot(aes(x = lambda, y = likelihood)) +
+  geom_line() +
+  geom_point(data = ll %>% dplyr::filter(lambda %in% c(5, 10, 15)),
+             aes(color = as.factor(lambda),x = lambda, y = likelihood),
+             size = 2) +
+  scale_color_discrete(name = "lambda") +
+  geom_vline(aes(xintercept = 8), color = "red") +
+  geom_label(aes(label = "ML", x = 8, y = 0.16), fill = "red",
+            alpha = 0.5)
+```
+
 Bij statistische inferentie willen we de likelihood eigenlijk inverteren $p(X|\lambda) \rightarrow p(\lambda|X)$.
-Op deze manier hopen we te weten te komen welk model van alle potentiele modellen het meeste zinvol/waarschijnlijk is.
+Op deze manier hopen we te weten te komen welk model van alle potentiële modellen het meeste zinvol/waarschijnlijk is.
 Zowel frequentist als bayesiaanse methoden inverteren in essentie $p(X|\lambda) \rightarrow p(\lambda|X)$ maar de methode verschilt.
 
+De maximum likelihood methode in frequentist statistiek zal als parameterschatting de waarde van lambda kiezen waar de likelihood functie maximaal is ($\lambda = 8$).
+Er kan dan ook, bijvoorbeeld, een 90% confidence interval berekend worden rond deze parameterschatting $(4.8 \leq \lambda \leq 14.4)$.
+De beslissingsruimte voor de parameter $\lambda$ wordt dus opgedeeld in twee delen: (1) waarden die waarschijnlijk zijn en (2) waarden die niet waarschijnlijk zijn.
 
 **Frequentist inferentie**
 
@@ -173,7 +196,7 @@ likelihood %>%
 ```
 
 Als we deze berekeningen herhalen voor verschillende waarden van $\lambda$, kunnen we ontdekken dat het 90% confidence interval (5% langs beiden kanten) gelijk is aan $4.0 \leq \lambda \leq 14.4$.
-De beslissingsruimte voor de parameter $\lambda$ wordt dus opgedeeld in twee delen: (1) waarden die waarschijnlijk zijn en (2) waarden die niet waarschijnlijk zijn.
+
 
 
 **Bayesiaanse inferentie**
