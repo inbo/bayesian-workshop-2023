@@ -166,7 +166,7 @@ $$
 p(\lambda|X) = \frac{p(X|\lambda) * p(\lambda)}{p(X)}
 $$
 
-Dit zorgt er voor dat we voor iedere potentiële waarde van $\lambda$ een waarschijnlijkheid zullen hebben.
+Dit zorgt er voor dat we voor **iedere** potentiële waarde van $\lambda$ een waarschijnlijkheid zullen hebben.
 
 De parameters hebben bij Bayesiaanse modellen dus een verdeling.
 Dit staat in contrast met frequentist inferentie waar de oplossingsruimte voor $\lambda$ opgesplitst wordt in twee delen: waarden die niet of wel waarschijnlijk zijn.
@@ -411,12 +411,16 @@ unimodal <- data.frame(
   mutate(prob = dnorm(x, mean = 30, sd = 5),
         cum_sum = pnorm(x, mean = 30, sd = 5))
 limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI"),
-                     x = c(13, 46, 13, 46))
+                     x = c(22, 38, 22, 38))
 
 p1 <- ggplot(unimodal) +
   geom_line(aes(x = x, y = prob)) +
-  geom_vline(data = limits, aes(xintercept = x, color = type, lty = type),
-             alpha = 0.5)
+  geom_vline(data = limits, aes(xintercept = x, color = type, lty = type,
+                                size = type),
+             alpha = 0.7) +
+  scale_color_manual(breaks = c("CPI", "HPDI"), values = c("black", "red")) +
+  scale_linetype_manual(breaks = c("CPI", "HPDI"),
+                        values = c("solid", "dashed"))
 
 # specify a bimodal distribution
 bimodal <- data.frame(
