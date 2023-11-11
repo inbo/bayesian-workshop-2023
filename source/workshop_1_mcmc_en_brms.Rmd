@@ -215,7 +215,8 @@ Er zijn twee mogelijke oplossingen:
 - *Conjugate priors*: Voor sommige verdelingen en combinaties van priors en likelihoods is het mogelijk om toch een analytische oplossing te krijgen (zie [deze lijst](https://en.wikipedia.org/wiki/Conjugate_prior)). Dit beperkt echter onze mogelijkheden:
   - enkel mogelijk voor enkele univariate en bivariate problemen
   - de conjugate priors beperken de vrijheid om je voorkennis voor te stellen (bijvoorbeeld zero-inflation ...)
-- *Sampling*: we krijgen informatie over de verdeling door eruit te samplen in plaats van het exact te berekenen.
+- *MCMC*: we krijgen informatie over de verdeling door eruit te samplen in plaats van het exact te berekenen.
+- *INLA*: Integrated Nested Laplace Approximation is een alternatief voor MCMC. Er wordt niet gesampled waardoor het algoritme sneller werkt. Dat is vooral interessant voor grote of complexe modellen.
 
 ## Parameterschatting met MCMC
 
