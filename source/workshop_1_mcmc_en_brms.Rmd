@@ -159,49 +159,8 @@ De maximum likelihood methode in frequentist statistiek zal als parameterschatti
 Er kan dan ook, bijvoorbeeld, een 90% confidence interval berekend worden rond deze parameterschatting $(4.8 \leq \lambda \leq 14.4)$.
 De beslissingsruimte voor de parameter $\lambda$ wordt dus opgedeeld in twee delen: (1) waarden die waarschijnlijk zijn en (2) waarden die niet waarschijnlijk zijn.
 
-**Frequentist inferentie**
 
-Bij frequentist inferentie definiëren we een hypothese over het data-genererende proces die we willen testen:
-
-- $H_0:$ de hypothese $\lambda$ is waar
-- $H_1:$ de hypothese $\lambda$ is niet waar
-
-De vuistregel in frequentist statistiek is dan:
-
-- als $P($data $X$ of extremer$|\lambda) < 0.05$, dan is \lambda niet waar  $\Rightarrow  P(\lambda|X) = 0$
-- als $P($data $X$ of extremer$|\lambda) \geq 0.05$, dan zou \lambda kunnen waar zijn  $\Rightarrow P(\lambda|X) = \text{?}$
-
-In onderstaande figuur staan de volgende kansen afgebeeld:
-
-- $p(X\geq8|\lambda = 5)\simeq$ `r 1 - round(likelihood %>% filter(x <= 8 & lambda == 5) %>% dplyr::pull(prob) %>% sum(), 3)`\
-  Dit is groter dan 0.05 dus we kunnen de hypothese dat $\lambda$ gelijk is aan 5 niet verwerpen.
-- $p(X\leq8|\lambda = 10)\simeq$ `r round(likelihood %>% filter(x <= 8 & lambda == 10) %>% dplyr::pull(prob) %>% sum(), 3)`\
-  Dit is groter dan 0.05 dus we kunnen de hypothese dat $\lambda$ gelijk is aan 10 niet verwerpen.
-- $p(X\leq8|\lambda = 15)\simeq$ `r round(likelihood %>% filter(x <= 8 & lambda == 15) %>% dplyr::pull(prob) %>% sum(), 3)`\
-  Dit is kleiner dan 0.05 dus we verwerpen de hypothese dat $\lambda$ gelijk is aan 15.
-
-
-```{r, purl = FALSE}
-likelihood %>%
-  ggplot(aes(x = x, y = prob, color = lambda)) +
-  geom_point() + 
-  geom_errorbar(aes(ymin = 0, ymax = prob), width = 0) +
-  geom_bar(data = likelihood %>%
-             filter((x <= 8 & lambda %in% c(10,15)) |
-                      (x >= 8 & lambda == 5)),
-           color = "grey", stat = "identity", alpha = 0.7) + 
-  xlab("aantal soorten mieren in een site") + 
-  ylab("kansdichtheid") +
-  facet_grid(cols = vars(lambda))
-```
-
-Als we deze berekeningen herhalen voor verschillende waarden van $\lambda$, kunnen we ontdekken dat het 90% confidence interval (5% langs beiden kanten) gelijk is aan $4.0 \leq \lambda \leq 14.4$.
-
-
-
-**Bayesiaanse inferentie**
-
-Bij Bayesiaanse inferentie wordt Bayes' rule gebruikt:
+Bij Bayesiaanse inferentie, daarentegen, wordt Bayes' rule gebruikt:
 
 $$
 p(\lambda|X) = \frac{p(X|\lambda) * p(\lambda)}{p(X)}
