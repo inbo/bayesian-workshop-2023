@@ -218,7 +218,7 @@ Er zijn twee mogelijke oplossingen:
 - *MCMC*: we krijgen informatie over de verdeling door eruit te samplen in plaats van het exact te berekenen.
 - *INLA*: Integrated Nested Laplace Approximation is een alternatief voor MCMC. Er wordt niet gesampled waardoor het algoritme sneller werkt. Dat is vooral interessant voor grote of complexe modellen.
 
-## Parameterschatting met MCMC
+We zullen in deze workshop focussen op MCMC.
 
 ### Wat is MCMC?
 
@@ -464,9 +464,16 @@ p2
 p3
 ```
 
+## MCMC software
 
-## Hypotheses testen
-Bayes' factor
+Er bestaan een hele boel software programma's die MCMC toepassen voor parameterschattingen.
+Jags, Nimble en Stan zijn drie voorbeelden waar een R interface voor bestaat.
+Een [recente vergelijking tussen deze drie](https://arxiv.org/pdf/2107.09357v1.pdf) toont dat ieder van heb sterktes en zwaktes hebben maar dat Stan, algemeen, het best presteert.
+
+In deze cursus kiezen we voor de R package [`brms`](https://cran.r-project.org/web/packages/brms/vignettes/brms_overview.pdf) die een handige, simpele interface biedt voor Stan. Er bestaan ook enkele alternatieven:
+
+- [RStan](https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html) is de basis van `brms`. Je hebt `RStan`nodig om `brms`te kunnen gebruiken omdat het rechtstreeks met Stan communiceert. 
+- [rstanarm](https://mc-stan.org/rstanarm/articles/index.html) is nog makkelijker dan `brms`qua syntax. Bovendien kan je met `rstanarm` gebruik maken van enkele vooral gecompileerde Stan modellen. Hierdoor duurt het fitten van je model minder lang. Een groot deel van de procestijd van `brms`gaat immers naar het compileren van het Stan programma.
 
 # Een model fitten met brms
 
@@ -1129,5 +1136,6 @@ We zien dat dit inderdaad bijna exact dezelfde resultaten oplevert. Ons Bayesiaa
 
 # Referenties {-}
 
-- Ben Lambert heeft een [youtube kanaal](https://www.youtube.com/channel/UC3tFZR3eL1bDY8CqZDOQh-w) met a student's guide to Bayesian statistics, een [korte cursus](https://ben-lambert.com/biology/) en [uitgebreidde slides](https://ben-lambert.com/bayesian-lecture-slides/) over Bayesiaanse statistiek
+- Stan User Guide [(link)](https://mc-stan.org/docs/2_18/stan-users-guide/index.html).
+- Ben Lambert heeft een [youtube kanaal](https://www.youtube.com/channel/UC3tFZR3eL1bDY8CqZDOQh-w) met a student's guide to Bayesian statistics, een [korte cursus](https://ben-lambert.com/biology/) en [uitgebreidde slides](https://ben-lambert.com/bayesian-lecture-slides/) over Bayesiaanse statistiek.
 
