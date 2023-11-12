@@ -468,15 +468,15 @@ p3
 
 Er bestaan een hele boel software programma's die MCMC toepassen voor parameterschattingen.
 Jags, Nimble en Stan zijn drie voorbeelden waar een R interface voor bestaat.
-Een [recente vergelijking tussen deze drie](https://arxiv.org/pdf/2107.09357v1.pdf) toont dat ieder van heb sterktes en zwaktes hebben maar dat Stan, algemeen, het best presteert.
+Een [recente vergelijking tussen deze drie](https://arxiv.org/pdf/2107.09357v1.pdf) toont dat ieder van deze drie sterktes en zwaktes hebben maar dat Stan, algemeen, het best presteert.
 
-In deze cursus kiezen we voor de R package [`brms`](https://cran.r-project.org/web/packages/brms/vignettes/brms_overview.pdf) die een handige, simpele interface biedt voor Stan. Er bestaan ook enkele alternatieven:
+In deze cursus kiezen we voor de R package [`brms`](https://cran.r-project.org/web/packages/brms/vignettes/brms_overview.pdf) die een handige, simpele interface biedt voor Stan.
+Er bestaan ook enkele alternatieven:
 
-- [RStan](https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html) is de basis van `brms`. Je hebt `RStan`nodig om `brms`te kunnen gebruiken omdat het rechtstreeks met Stan communiceert. 
+- [RStan](https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html) is de basis van `brms`. Je hebt `RStan`nodig om `brms`te kunnen gebruiken omdat het rechtstreeks met Stan communiceert. Een model definiëren in "Pure" Stan code is echter redelijk omslachtig.
 - [rstanarm](https://mc-stan.org/rstanarm/articles/index.html) is nog makkelijker dan `brms`qua syntax. Bovendien kan je met `rstanarm` gebruik maken van enkele vooral gecompileerde Stan modellen. Hierdoor duurt het fitten van je model minder lang. Een groot deel van de procestijd van `brms`gaat immers naar het compileren van het Stan programma.
 
 # Een model fitten met brms
-
 
 ## Dataset laden en data exploratie
 
@@ -892,6 +892,8 @@ pp_check(fit_poisson2, type = "dens_overlay_grouped", ndraws = 100,
 ```
 
 Hoe kunnen we deze modellen nu objectief gaan vergelijken?
+
+
 
 # Vergelijken van modellen
 
