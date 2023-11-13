@@ -1,7 +1,7 @@
 # Likelihood function for the data (log)
 ll.fun <- function(beta_0, beta_1, tau = 0.2){
   ll <- sum(dnorm(x = y, mean = beta_0 + beta_1 * x,
-                  sd = sqrt(1 / tau),log = TRUE))
+                  sd = sqrt(1 / tau), log = TRUE))
   return(ll)
 }
 
