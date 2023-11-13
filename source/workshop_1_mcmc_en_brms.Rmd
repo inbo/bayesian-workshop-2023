@@ -230,13 +230,11 @@ Er zijn twee mogelijke oplossingen:
 
 ### Wat is MCMC?
 
-MCMC staat voor 'Markov chain Monte Carlo'. We gaan niet dieper in op deze begrippen. Gaandeweg wordt wel duidelijk wat hiermee wordt bedoeld.
+MCMC staat voor 'Markov chain Monte Carlo'. Markov chain is een algoritme om een random walk te simuleren en Monte Carlo is een algoritme om de parameterruimte te verkennen.
 
-De posterior distributie kan je vergelijken met een berg. De top van de berg ligt waar de parameterwaarde het meest waarschijnlijk is na het combineren van de likelihood van je data met je prior (maximum likelihood). De ligging en de vorm van de bergtop is echter onbekend. Het doel van een MCMC-algoritme is op een efficiënte wijze de bergtop en de omgeving te verkennen. 
+De posterior distributie kan je vergelijken met een berg (zie figuur). De top van de berg ligt waar de parameterwaarde het meest waarschijnlijk is na het combineren van de likelihood van je data met je prior. De ligging en de vorm van de bergtop is echter onbekend. Het doel van een MCMC-algoritme is op een efficiënte wijze de bergtop en de omgeving te verkennen. 
 
-MCMC genereert een reeks van parameterwaarden aan de hand van een aantal regels die de sampler toelaat de hele range van de posterior distributie te exploreren. De regels zorgen ervoor dat de sampler de hele tijd in de buurt van de top van de berg blijft.
-
-MCMC is een random wandeling in de parameterruimte in de omgeving waar de posterior distributie het hoogst is (de top van de berg). De grootte en de richting van de stap varieert.
+Een MCMC algoritme neemt hiervoor random samples van de posterior en genereert een reeks die de hele range van de posterior distributie exploreert. De regels zorgen ervoor dat de sampler de hele tijd in de buurt van de top van de berg blijft. Het is een 'random walk' in de parameterruimte in de omgeving waar de posterior distributie het hoogst is (de top van de berg). De grootte en de richting van de stap varieert.
 
 Bij een stap bergop gaat de MCMC altijd door. Is de stap bergaf, dan gaat de MCMC niet altijd door. De kans om bergaf te gaan hangt af van hoe diep de stap naar beneden is. Kleine stapjes naar beneden worden vaak genomen. Bij diepe stappen naar beneden blijft de MCMC meestal staan en kiest de MCMC vervolgens een nieuwe stap.
 
@@ -247,17 +245,16 @@ De absolute hoogte van de berg (posterior likelihood) doet er op zich niet toe. 
 Een eenvoudig MCMC-algoritme is het Metropolis algoritme. Het wordt beschreven door deze formele regels:
 
 1. Kies een startwaarde voor de parameter
-2. Bereken voor die parameter de posterior likelihood (= prior + likelihood)
+2. Bereken voor die parameter de posterior (= likelihood + prior)
 3. Kies lukraak een nieuwe parameterwaarde, maar 'in de buurt' van de vorige
 4. Bereken de nieuwe posterior voor die nieuwe parameterwaarde
-5. Is de likelihood voor de nieuwe posterior $>$ huidige posterior $\Rightarrow$ nieuwe waarde behouden
-6. Is de likelihood voor de nieuwe posterior $<$ huidige posterior $\Rightarrow$
+5. Is de nieuwe posterior $>$ huidige posterior $\Rightarrow$ nieuwe waarde behouden
+6. Is de nieuwe posterior $<$ huidige posterior $\Rightarrow$
    a) Bereken de ratio (nieuwe posterior / vorige posterior).
    b) Aanvaard de nieuwe waarde met een kans gelijk aan de ratio. (dus hoe lager de nieuwe likelihood hoe kleiner de kans op aanvaarden. 
 7. Doorloop 3 tot 6 (enkele duizenden keren).
 
-Het is doordat de kans om parameterwaarden met een lagere likelihood te selecteren varieert met de ratio van de likelihoods dat MCMC in de limiet (na heel veel iteraties) een correcte afspiegeling is van de posterior distributie. 
-
+Doordat de kans om parameterwaarden met een lagere posterior al dan niet te accepteren varieert met het verschil in posteriorwaarde convergeert een MCMC in de limiet (na heel veel iteraties) naar de posterior distributie.
 
 Voor eenvoudige gevallen is een MCMC-algoritme opstellen niet zo complex. Hieronder een eenvoudig voorbeeld.
 
@@ -282,14 +279,14 @@ df_data <- data.frame(y = y, x = x)
 ggplot(df_data, aes(x = x, y = y)) +
   geom_point() +
   geom_smooth(method = "lm", se = TRUE)
+# grootte van de plot beperken
 ```
 
 Een lineaire regressie met LM geeft:
 
 ```{r}
 lm1 <- lm(formula = y ~ x, data = df_data)
-summary(lm1)
-# output beperken
+lm1$coefficients
 ```
 
 Met betrouwbaarheidsinterval
@@ -297,103 +294,125 @@ Met betrouwbaarheidsinterval
 confint(lm1)
 ```
 
-We lezen enkele korte functies in om de (log) likelihood voor dit model te berekenen en het MCMC metropolis algoritme uit te voeren.
+We lezen enkele korte functies in om de (log) likelihood en de prior te berekenen en het MCMC metropolis algoritme uit te voeren.
 
 ```{r}
 source(file = "./source/mcmc_functions.R")
 ```
 
-Vermits het een eenvoudig model is met een kleine dataset, kunnen we de posterior likelihood voor een groot aantal verschillende combinaties uitrekenen
+Voor dit eenvoudig model met een kleine dataset kunnen we de posterior voor een groot aantal combinaties voor beta_0 en beta_1 uitrekenen en plotten.
 
 ```{r}
-df <- expand.grid(a = seq(-1, 15, 0.5), b = seq(-3, 8, 0.5))
+df <- expand.grid(beta_0 = seq(-1, 15, 0.5), beta_1 = seq(-3, 8, 0.5))
 df$post <- NA
 for (i in 1:nrow(df)) {
-  df[i,"post"] <- ll.fun(a = df[i,1], b = df[i,2]) +
-    prior.fun(a = df[i,1], b = df[i,2])
+  df[i, "post"] <- ll.fun(beta_0 = df[i, "beta_0"],
+                         b = df[i, "beta_1"]) +
+                  prior.fun(beta_0 = df[i, "beta_0"],
+                            beta_1 = df[i, "beta_1"])
 }
 ```
 
 ```{r}
-ggplot(df, aes(x = a, y = b, z = post)) +
+ggplot(df, aes(x = beta_0, y = beta_1, z = post)) +
   geom_raster(aes(fill = post)) + geom_contour(colour = "black") +
   scale_fill_gradientn(colours = rainbow(n = 4))
 ```
 
-We kiezen nu een startwaarde voor $\beta_0$  en $\beta_1$ 
+Om de MCMC te starten moeten we startwaarden kiezen voor $\beta_0$ en
+$\beta_1$ 
+
 ```{r}
-beta_0 <- 12
-beta_1 <- 6
+mcmc_small <- MCMC_metro(x = x,         # vector x waarden
+                         y = y,         # vector y waarden
+                         N = 150,       # lengte van de MCMC
+                         sigma = 1,     # stapgrootte (sd)
+                         init_b0 = 12,  # initiële waarde beta_0 (intercept)
+                         init_b1 = 6)   # initiële waarde beta_1 (helling)
 ```
 
 ```{r}
-mcmc_small <- MCMC_metro(x = x, y = y, N = 100,
-                         sigma = 1,
-                         init_a = beta_0, init_b = beta_1)
-```
-
-```{r}
-ggplot(df, aes(x = a, y = b, z = post)) +
-  geom_raster(aes(fill = post)) + geom_contour(binwidth = 20, colour = "black") +
+ggplot(df, aes(x = beta_0, y = beta_1, z = post)) +
+  geom_raster(aes(fill = post)) +
+  geom_contour(binwidth = 20, colour = "black") +
   scale_fill_gradientn(colours = rainbow(n = 4)) +
-  geom_path(data = mcmc_small, aes(x = a, y = b, z = NA), colour = "black") +
-  geom_point(data = mcmc_small, aes(x = a, y = b, z = NA), colour = "red") +
+  geom_path(data = mcmc_small,
+            aes(x = beta_0, y = beta_1, z = NA), colour = "black") +
+  geom_point(data = mcmc_small,
+             aes(x = beta_0, y = beta_1, z = NA), colour = "red") +
   coord_cartesian(xlim = c(-1, 14.5), ylim = c(-3, 7)) +
   theme(legend.position="none")
 ```
 
-De startwaarde ligt ver van de maximale likelihood. Het duurt even voor de MCMC stabiliseert in de omgeving van de top van de berg. Daarom wordt het eerste deel van de MCMC nooit gebruikt. Dit is de 'burn-in'.
+De startwaarde ligt een eind van de maximale likelihood. Het duurt even voor de MCMC stabiliseert in de omgeving van de top van de berg. Daarom wordt het eerste deel van de MCMC nooit gebruikt. Dit is de 'burn-in' (of warmp-up in brms).
+
+We runnen nu hetzelde model, maar met een veel langere mcmc
 
 ```{r}
-mcmc <- MCMC_metro(x = x, y = y, N = 5000, sigma = 1, init_a = 12, init_b = 6)
+mcmc_l <- MCMC_metro(x = x,
+                     y = y,
+                     N = 5000,
+                     sigma = 1,
+                     init_b0 = 12,
+                     init_b1 = 6)
 ```
 
+
 ```{r}
-p1 <- ggplot(df, aes(x = a, y = b, z = post)) +
-  geom_raster(aes(fill = post)) + geom_contour(binwidth = 20, colour = "black") +
+p1 <- ggplot(df, aes(x = beta_0, y = beta_1, z = post)) +
+  geom_raster(aes(fill = post)) +
+  geom_contour(binwidth = 20, colour = "black") +
   scale_fill_gradientn(colours = rainbow(n = 4)) +
-  geom_path(data = mcmc, aes(x = a, y = b, z = NA), colour = "black") +
-  geom_point(data = mcmc, aes(x = a, y = b, z = NA), colour = "red") +
+  geom_path(data = mcmc_l,
+            aes(x = beta_0, y = beta_1, z = NA), colour = "black") +
+  geom_point(data = mcmc_l,
+             aes(x = beta_0, y = beta_1, z = NA), colour = "red") +
   coord_cartesian(xlim = c(-1, 14.5), ylim = c(-3, 7)) +
   theme(legend.position="none")
 
-p2 <- ggplot(data = mcmc, aes(x = a)) + geom_histogram(bins = 50) +
-  geom_vline(xintercept = quantile(mcmc$a, probs = c(0.05, 0.5, 0.95)), colour = "red") +
+p2 <- ggplot(data = mcmc_l, aes(x = beta_0)) + geom_histogram(bins = 50) +
   scale_x_continuous(limits = c(-1, 14.5), breaks = seq(-1, 14.5, 1)) +
   theme(axis.title.x = element_blank())
 
-p3 <- ggplot(data = mcmc, aes(x = b)) + geom_histogram(bins = 50) +
-  geom_vline(xintercept = quantile(mcmc$b, probs = c(0.05, 0.5, 0.95)), colour = "red") +
-  coord_flip() + scale_x_continuous(limits = c(-3, 7), breaks = seq(-3, 7, 1)) +
+p3 <- ggplot(data = mcmc_l, aes(x = beta_1)) + geom_histogram(bins = 50) +
+  coord_flip() +
+  scale_x_continuous(limits = c(-3, 7), breaks = seq(-3, 7, 1)) +
   theme(axis.title.y = element_blank())
 
 empty <- ggplot()
 
 gridExtra::grid.arrange(p2, ggplot(), p1, p3, ncol = 2, nrow = 2,
   widths = c(4, 1), heights = c(1, 4))
-
 ```
 
-Trace plot
+Voor elke parameter kan de MCMC worden weergegeven in een 'trace plot'.
 
 ```{r}
-mcmc %>% 
-  ggplot(aes(x = iter, y = a)) +
+mcmc_l %>%
+  dplyr::select(iter, beta_0, beta_1) %>%
+  pivot_longer(cols = c("beta_0", "beta_1"), names_to = "param") %>%
+  ggplot(aes(x = iter, y = value)) + geom_line() +
+  facet_wrap(~param, nrow = 2) +
   annotate("rect",  xmin = 0, xmax = 200, ymin = -Inf, ymax = +Inf,
            alpha = 0.3, fill = "gold") +
-  annotate("label", label = "burn-in", x = 250, y = 12, hjust = "left",
-           fill = "gold") +
-  geom_line()
+  annotate("label", label = "burn-in", x = 200, y = 11, hjust = "left",
+           fill = "gold")
+```
+
+Schatting voor beta_0 (intercept)
+```{r}
+quantile(mcmc_l$beta_0[200:5000], probs = c(0.05, 0.5, 0.95))
+```
+
+Schatting voor beta_1 (helling)
+```{r}
+quantile(mcmc_l$beta_1[200:5000], probs = c(0.05, 0.5, 0.95))
 ```
 
 
-Thinning
+De samples in de MCMC liggen dicht bij elkaar. Om meer onafhanekelijke samples te verkrijgen worden slecht elke x waarden van de MCMC gebruikt (Thinning). Dit bespaart ook aanzienlijk geheugenruimte.
 
-Parallel chains
-
- https://nicercode.github.io/guides/mcmc/
-
-Er bestaan heel wat meer gesofesticeerde samplers zoals WinBugs, Jags, Stan, ..., maar het principe is bij MCMC is steeds hetzelfde. 
+Er bestaan meer gesofesticeerde samplers zoals WinBugs, Jags of Stan, maar het principe is bij MCMC is steeds hetzelfde. 
 
 Het package 'brms' gebruikt standaard de stan sampler.
 
