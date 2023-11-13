@@ -298,10 +298,10 @@ Voor dit eenvoudig model met een kleine dataset kunnen we de posterior voor een 
 df <- expand.grid(beta_0 = seq(-1, 15, 0.5), beta_1 = seq(-3, 8, 0.5))
 df$post <- NA
 for (i in 1:nrow(df)) {
-  df[i,"post"] <- ll.fun(beta_0 = df[i,"beta_0"],
-                         b = df[i,"beta_1"]) +
-                  prior.fun(beta_0 = df[i,"beta_0"],
-                            beta_1 = df[i,"beta_1"])
+  df[i, "post"] <- ll.fun(beta_0 = df[i, "beta_0"],
+                         b = df[i, "beta_1"]) +
+                  prior.fun(beta_0 = df[i, "beta_0"],
+                            beta_1 = df[i, "beta_1"])
 }
 ```
 
