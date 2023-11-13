@@ -600,7 +600,7 @@ thinning <- 1          # verdunningsfactor (hier 1 = geen verdunning)
 Het model wordt gefit a.d.h.v. de `brm()` functie. De syntax is zeer gelijkaardig aan functies die in frequentist statistics worden gebruikt zoals `lm()` en `glm()`. De `brm()` functie bevat heel wat argumenten (zie `?brm`). Handige argumenten die we hier niet gebruiken zijn bijvoorbeeld:
 
 -   `inits` om de beginwaarden van MCMC algoritme in te stellen. Indien deze niet gespecificeerd zijn, gebruikt de functie default waarden.
--   `prior` om prior distributies te voorzien. Indien deze niet gespecificeerd zijn, gebruikt de functie default (niet informatieve) priors. Het argument `sample_prior` kan gebruikt worden om van de prior te samplen zodat je kan visualiseren of de gebruikte prior voldoet aan je verwachtingen.
+-   `prior` om prior distributies te voorzien. Indien deze niet gespecificeerd zijn, gebruikt de functie default (niet informatieve) priors. Het argument `sample_prior` kan gebruikt worden om van de prior te samplen zodat je kan visualiseren of de gebruikte prior voldoet aan je verwachtingen (ook handig voor [prior predictive checks](https://arelbundock.com/posts/marginaleffects_priors/)).
 -   `file` en `file_refit` om het model object op te slaan nadat het gefit is. Als je de code opnieuw runt en het model is al eens opgeslaan, dan zal `brm()` dit model gewoon inladen in plaats van het opnieuw te fitten.
 
 
