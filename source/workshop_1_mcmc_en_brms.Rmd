@@ -76,10 +76,20 @@ data.frame(
         col.names = c("", "Frequentist", "Bayesiaans"))
 ```
 
+Waarom  zou je Bayesiaanse modellen willen gebruiken?
+
+- Alle frequentist modellen kan je ook benaderen door een Bayesiaans model, omgekeerd niet.
+- Complexere modellen met tijd- en ruimte-effecten of met differentiaal vergelijkingen (Ordinary Differential Equations, ODE).
+- Interpretatie soms makkelijker / intuïtiever.
+- Voor iedere parameter een volledige kansverdeling waardoor je hiermee makkelijk kan verder rekenen of simuleren.
+- Verschillende bronnen van data combineren in een geïntegreerd model.
+- Gekende data / conclusies / verwachtingen meenemen in je model m.b.v. een prior.
+
 
 ### Statistische inferentie
 
-Stel dat we geïnteresseerd zijn in het aantal soorten mieren dat voorkomt in een onderzoekssite van een vooraf gespecificeerde grootte.
+Statistische inferentie is trachten om iets te leren over een (populatie)parameter op basis van data.
+Stel dat we geïnteresseerd zijn in het aantal soorten mieren dat voorkomt in een onderzoekssite van een vooraf gespecificeerde oppervlakte.
 Aantallen worden vaak gespecificeerd door een Poisson verdeling aangezien deze verdeling enkel positieve gehele getallen aanneemt. 
 
 $$ X \sim Poisson(\lambda)$$
@@ -89,7 +99,7 @@ We kennen de echte waarde van $\lambda$ niet *a priori*.
 Ons model definieert een collectie van waarschijnlijkheidsmodellen (probability models); één voor iedere mogelijke waarde van $\lambda$. 
 Deze collectie van modellen noemen we de *likelihood*.
 
-In onderstaande figuur tonen we drie voorbeelden van een potentiele likelihood.
+In onderstaande figuur tonen we drie voorbeelden van een potentiële likelihood.
 Het zijn drie kansdichtheidsfunctie van een Poisson verdelingen met steeds een andere parameter $\lambda$.
 
 ```{r, purl = FALSE}
@@ -121,61 +131,42 @@ likelihood %>%
   facet_grid(cols = vars(lambda))
 ```
 
-Ieder van deze modellen met steeds een andere waarde van $\lambda$ kan ons de waarde van $X=8$ geven.
-Bij statistische inferentie willen we de likelihood eigenlijk inverteren $p(X|\lambda) \rightarrow p(\lambda|X)$.
-Op deze manier hopen we te weten te komen welk model van alle potentiele modellen het meeste zinvol/waarschijnlijk is.
-Zowel frequentist als bayesiaanse methoden inverteren in essentie $p(X|\lambda) \rightarrow p(\lambda|X)$ maar de methode verschilt.
+Ieder van deze modellen, met steeds een andere waarde van $\lambda$, kan ons de waarde van $X=8$ geven.
 
-
-**Frequentist inferentie**
-
-Bij frequentist inferentie definiëren we een hypothese over het data-genererende proces die we willen testen:
-
-- $H_0:$ de hypothese $\lambda$ is waar
-- $H_1:$ de hypothese $\lambda$ is niet waar
-
-De vuistregel in frequentist statistiek is dan:
-
-- als $P($data $X$ of extremer$|\lambda) < 0.05$, dan is \lambda niet waar  $\Rightarrow  P(\lambda|X) = 0$
-- als $P($data $X$ of extremer$|\lambda) \geq 0.05$, dan zou \lambda kunnen waar zijn  $\Rightarrow P(\lambda|X) = \text{?}$
-
-In onderstaande figuur staan de volgende kansen afgebeeld:
-
-- $p(X\geq8|\lambda = 5)\simeq$ `r 1 - round(likelihood %>% filter(x <= 8 & lambda == 5) %>% dplyr::pull(prob) %>% sum(), 3)`\
-  Dit is groter dan 0.05 dus we kunnen de hypothese dat $\lambda$ gelijk is aan 5 niet verwerpen.
-- $p(X\leq8|\lambda = 10)\simeq$ `r round(likelihood %>% filter(x <= 8 & lambda == 10) %>% dplyr::pull(prob) %>% sum(), 3)`\
-  Dit is groter dan 0.05 dus we kunnen de hypothese dat $\lambda$ gelijk is aan 10 niet verwerpen.
-- $p(X\leq8|\lambda = 15)\simeq$ `r round(likelihood %>% filter(x <= 8 & lambda == 15) %>% dplyr::pull(prob) %>% sum(), 3)`\
-  Dit is kleiner dan 0.05 dus we verwerpen de hypothese dat $\lambda$ gelijk is aan 15.
-
+De likelihood functie geeft ons, voor iedere pontentiële waarde van de parameter, de kans op de data.
+De figuur hieronder toont dit voor onze data met slechts één observatie $X=8$.
 
 ```{r, purl = FALSE}
-likelihood %>%
-  ggplot(aes(x = x, y = prob, color = lambda)) +
-  geom_point() + 
-  geom_errorbar(aes(ymin = 0, ymax = prob), width = 0) +
-  geom_bar(data = likelihood %>%
-             filter((x <= 8 & lambda %in% c(10,15)) |
-                      (x >= 8 & lambda == 5)),
-           color = "grey", stat = "identity", alpha = 0.7) + 
-  xlab("aantal soorten mieren in een site") + 
-  ylab("kansdichtheid") +
-  facet_grid(cols = vars(lambda))
+ll <- data.frame(lambda = seq(0, 20, 0.2)) %>%
+  mutate(likelihood = dpois(8, lambda))
+ll %>%
+  ggplot(aes(x = lambda, y = likelihood)) +
+  geom_line() +
+  geom_point(data = ll %>% dplyr::filter(lambda %in% c(5, 10, 15)),
+             aes(color = as.factor(lambda),x = lambda, y = likelihood),
+             size = 2) +
+  scale_color_discrete(name = "lambda") +
+  geom_vline(aes(xintercept = 8), color = "red") +
+  geom_label(aes(label = "ML", x = 8, y = 0.16), fill = "red",
+            alpha = 0.5)
 ```
 
-Als we deze berekeningen herhalen voor verschillende waarden van $\lambda$, kunnen we ontdekken dat het 90% confidence interval (5% langs beiden kanten) gelijk is aan $4.0 \leq \lambda \leq 14.4$.
+Bij statistische inferentie willen we de likelihood eigenlijk inverteren $p(X|\lambda) \rightarrow p(\lambda|X)$.
+Op deze manier hopen we te weten te komen welk model van alle potentiële modellen het meeste zinvol/waarschijnlijk is.
+Zowel frequentist als bayesiaanse methoden inverteren in essentie $p(X|\lambda) \rightarrow p(\lambda|X)$ maar de methode verschilt.
+
+De maximum likelihood methode in frequentist statistiek zal als parameterschatting de waarde van lambda kiezen waar de likelihood functie maximaal is ($\lambda = 8$).
+Er kan dan ook, bijvoorbeeld, een 90% confidence interval berekend worden rond deze parameterschatting $(4.8 \leq \lambda \leq 14.4)$.
 De beslissingsruimte voor de parameter $\lambda$ wordt dus opgedeeld in twee delen: (1) waarden die waarschijnlijk zijn en (2) waarden die niet waarschijnlijk zijn.
 
 
-**Bayesiaanse inferentie**
-
-Bij Bayesiaanse inferentie wordt Bayes' rule gebruikt:
+Bij Bayesiaanse inferentie, daarentegen, wordt Bayes' rule gebruikt:
 
 $$
 p(\lambda|X) = \frac{p(X|\lambda) * p(\lambda)}{p(X)}
 $$
 
-Dit zorgt er voor dat we voor iedere potentiële waarde van $\lambda$ een waarschijnlijkheid zullen hebben.
+Dit zorgt er voor dat we voor **iedere** potentiële waarde van $\lambda$ een waarschijnlijkheid zullen hebben.
 
 De parameters hebben bij Bayesiaanse modellen dus een verdeling.
 Dit staat in contrast met frequentist inferentie waar de oplossingsruimte voor $\lambda$ opgesplitst wordt in twee delen: waarden die niet of wel waarschijnlijk zijn.
@@ -224,9 +215,10 @@ Er zijn twee mogelijke oplossingen:
 - *Conjugate priors*: Voor sommige verdelingen en combinaties van priors en likelihoods is het mogelijk om toch een analytische oplossing te krijgen (zie [deze lijst](https://en.wikipedia.org/wiki/Conjugate_prior)). Dit beperkt echter onze mogelijkheden:
   - enkel mogelijk voor enkele univariate en bivariate problemen
   - de conjugate priors beperken de vrijheid om je voorkennis voor te stellen (bijvoorbeeld zero-inflation ...)
-- *Sampling*: we krijgen informatie over de verdeling door eruit te samplen in plaats van het exact te berekenen.
+- *MCMC*: we krijgen informatie over de verdeling door eruit te samplen in plaats van het exact te berekenen.
+- *INLA*: Integrated Nested Laplace Approximation is een alternatief voor MCMC. Er wordt niet gesampled waardoor het algoritme sneller werkt. Dat is vooral interessant voor grote of complexe modellen.
 
-## Parameterschatting met MCMC
+We zullen in deze workshop focussen op MCMC.
 
 ### Wat is MCMC?
 
@@ -439,12 +431,16 @@ unimodal <- data.frame(
   mutate(prob = dnorm(x, mean = 30, sd = 5),
         cum_sum = pnorm(x, mean = 30, sd = 5))
 limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI"),
-                     x = c(13, 46, 13, 46))
+                     x = c(22, 38, 22, 38))
 
 p1 <- ggplot(unimodal) +
   geom_line(aes(x = x, y = prob)) +
-  geom_vline(data = limits, aes(xintercept = x, color = type, lty = type),
-             alpha = 0.5)
+  geom_vline(data = limits, aes(xintercept = x, color = type, lty = type,
+                                size = type),
+             alpha = 0.7) +
+  scale_color_manual(breaks = c("CPI", "HPDI"), values = c("black", "red")) +
+  scale_linetype_manual(breaks = c("CPI", "HPDI"),
+                        values = c("solid", "dashed"))
 
 # specify a bimodal distribution
 bimodal <- data.frame(
@@ -487,12 +483,19 @@ p2
 p3
 ```
 
+## MCMC software
 
-## Hypotheses testen
-Bayes' factor
+Er bestaan een hele boel software programma's die MCMC toepassen voor parameterschattingen.
+Jags, Nimble en Stan zijn drie voorbeelden waar een R interface voor bestaat.
+Een [recente vergelijking tussen deze drie](https://arxiv.org/pdf/2107.09357v1.pdf) toont dat ieder van deze drie sterktes en zwaktes hebben maar dat Stan, algemeen, het best presteert.
+
+In deze cursus kiezen we voor de R package [`brms`](https://cran.r-project.org/web/packages/brms/vignettes/brms_overview.pdf) die een handige, simpele interface biedt voor Stan.
+Er bestaan ook enkele alternatieven:
+
+- [RStan](https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html) is de basis van `brms`. Je hebt `RStan`nodig om `brms`te kunnen gebruiken omdat het rechtstreeks met Stan communiceert. Een model definiëren in "Pure" Stan code is echter redelijk omslachtig.
+- [rstanarm](https://mc-stan.org/rstanarm/articles/index.html) is nog makkelijker dan `brms`qua syntax. Bovendien kan je met `rstanarm` gebruik maken van enkele vooral gecompileerde Stan modellen. Hierdoor duurt het fitten van je model minder lang. Een groot deel van de procestijd van `brms`gaat immers naar het compileren van het Stan programma.
 
 # Een model fitten met brms
-
 
 ## Dataset laden en data exploratie
 
@@ -909,6 +912,8 @@ pp_check(fit_poisson2, type = "dens_overlay_grouped", ndraws = 100,
 
 Hoe kunnen we deze modellen nu objectief gaan vergelijken?
 
+
+
 # Vergelijken van modellen
 
 Op basis van de PPCs kunnen we reeds zien welk model het best past bij de data. Verder zijn er nog enkele functies die **brms** voorziet om verschillende modellen te vergelijken. Met de functie `add_criterion()` kan je model fit criteria toevoegen aan model objecten. Typ `?add_criterion()` om te zien welke beschikbaar zijn. Zie ook <https://mc-stan.org/loo/articles/online-only/faq.html>
@@ -1152,5 +1157,6 @@ We zien dat dit inderdaad bijna exact dezelfde resultaten oplevert. Ons Bayesiaa
 
 # Referenties {-}
 
-- Ben Lambert heeft een [youtube kanaal](https://www.youtube.com/channel/UC3tFZR3eL1bDY8CqZDOQh-w) met a student's guide to Bayesian statistics, een [korte cursus](https://ben-lambert.com/biology/) en [uitgebreidde slides](https://ben-lambert.com/bayesian-lecture-slides/) over Bayesiaanse statistiek
+- Stan User Guide [(link)](https://mc-stan.org/docs/2_18/stan-users-guide/index.html).
+- Ben Lambert heeft een [youtube kanaal](https://www.youtube.com/channel/UC3tFZR3eL1bDY8CqZDOQh-w) met a student's guide to Bayesian statistics, een [korte cursus](https://ben-lambert.com/biology/) en [uitgebreidde slides](https://ben-lambert.com/bayesian-lecture-slides/) over Bayesiaanse statistiek.
 
