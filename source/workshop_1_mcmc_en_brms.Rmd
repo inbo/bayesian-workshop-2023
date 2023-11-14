@@ -770,7 +770,7 @@ Andere packages die van pas kunnen komen bij het controleren van MCMC convergent
 
 ```         
 # voorbeeld
-install.packages(mcmcplots)
+install.packages("mcmcplots")
 mcmcplots::mcmcplot(as.mcmc(fit_normal1, pars = parameters))
 ```
 
