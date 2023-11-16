@@ -283,7 +283,7 @@ lm1$coefficients
 
 Met betrouwbaarheidsinterval
 ```{r}
-confint(lm1)
+confint(lm1, level = 0.9)
 ```
 
 We lezen enkele korte functies in om de (log) likelihood en de prior te berekenen en het MCMC metropolis algoritme uit te voeren.
@@ -465,7 +465,8 @@ p2 <- ggplot(bimodal) +
   geom_vline(data = measures, aes(xintercept = x), color = "red") +
   geom_label(data = measures,
             aes(label = measures, x = x, y = c(0.1, 0.09, 0.08)), fill = "red",
-            alpha = 0.5)
+            alpha = 0.5) +
+  geom_hline(aes(yintercept = 0.0123), lty = 2)
 p3 <- ggplot(bimodal) +
   geom_vline(data = limits %>% filter(type == "CPI"), aes(xintercept = x)) +
   geom_bar(data = bimodal %>% filter(x >= 9.5 & x <= 37),
@@ -479,6 +480,7 @@ p1
 ```{r, purl = FALSE}
 p2
 ```
+
 ```{r, purl = FALSE}
 p3
 ```
@@ -551,7 +553,8 @@ ants_df %>%
 ants_df %>%
   ggplot(aes(y = sp_rich, x = latitude)) +
     geom_point() +
-    geom_smooth(method = "loess", formula = "y ~ x", colour = "firebrick") +
+    geom_smooth(method = "loess", formula = "y ~ x", colour = "firebrick",
+                level = 0.9) +
     facet_wrap(~habitat)
 ```
 
@@ -561,7 +564,8 @@ ants_df %>%
 ants_df %>%
   ggplot(aes(y = sp_rich, x = elevation)) +
     geom_point() +
-    geom_smooth(method = "loess", formula = "y ~ x", colour = "firebrick") +
+    geom_smooth(method = "loess", formula = "y ~ x", colour = "firebrick",
+                level = 0.9) +
     facet_wrap(~habitat)
 ```
 
@@ -678,10 +682,10 @@ cumquant <- function(x, p) {
 as_draws_df(fit_normal1, variable = parameters) %>%
   mutate(across(all_of(parameters), ~cummean(.x),
                 .names = "{.col}_gemiddelde"),
-         across(all_of(parameters), ~cumquant(.x, 0.1),
-                .names = "{.col}_q10"),
-         across(all_of(parameters), ~cumquant(.x, 0.9),
-                .names = "{.col}_q90")) %>%
+         across(all_of(parameters), ~cumquant(.x, 0.05),
+                .names = "{.col}_q05"),
+         across(all_of(parameters), ~cumquant(.x, 0.95),
+                .names = "{.col}_q95")) %>%
   select(-all_of(parameters)) %>%
   # zet om naar lang formaat voor visualisatie
   pivot_longer(cols = starts_with(parameters), names_to = "name",
@@ -770,7 +774,7 @@ Andere packages die van pas kunnen komen bij het controleren van MCMC convergent
 
 ```         
 # voorbeeld
-install.packages(mcmcplots)
+install.packages("mcmcplots")
 mcmcplots::mcmcplot(as.mcmc(fit_normal1, pars = parameters))
 ```
 
@@ -950,8 +954,8 @@ Als je ervan uitgaat dat dit verschil normaal verdeeld is, kan je met de onzeker
 comp_loo %>%
   as.data.frame() %>%
   select(elpd_diff, se_diff) %>%
-  mutate(ll_diff = elpd_diff  + qnorm(0.025) * se_diff,
-         ul_diff = elpd_diff  + qnorm(0.975) * se_diff)
+  mutate(ll_diff = elpd_diff  + qnorm(0.05) * se_diff,
+         ul_diff = elpd_diff  + qnorm(0.95) * se_diff)
 ```
 
 ## K-fold cross-validation
@@ -995,8 +999,8 @@ De resultaten zijn hetzelfde, maar de verschillen zijn iets kleiner als voordien
 comp_kfold %>%
   as.data.frame() %>%
   select(elpd_diff, se_diff) %>%
-  mutate(ll_diff = elpd_diff  + qnorm(0.025) * se_diff,
-         ul_diff = elpd_diff  + qnorm(0.975) * se_diff)
+  mutate(ll_diff = elpd_diff  + qnorm(0.05) * se_diff,
+         ul_diff = elpd_diff  + qnorm(0.95) * se_diff)
 ```
 
 ## WAIC
@@ -1027,8 +1031,8 @@ print(comp_waic, simplify = FALSE, digits = 3)
 comp_waic %>%
   as.data.frame() %>%
   select(waic, elpd_diff, se_diff) %>%
-  mutate(ll_diff = elpd_diff  + qnorm(0.025) * se_diff,
-         ul_diff = elpd_diff  + qnorm(0.975) * se_diff)
+  mutate(ll_diff = elpd_diff  + qnorm(0.05) * se_diff,
+         ul_diff = elpd_diff  + qnorm(0.95) * se_diff)
 ```
 
 ## Conclusie
@@ -1095,7 +1099,7 @@ Dit kan eenvoudig via de `hypothesis()` functie van de **brms** package.
 
 ```{r resultaten-hypothese-test}
 # Test hypothese verschil tussen habitats
-hyp <- hypothesis(fit_poisson2, "habitatForest = 0", alpha = 0.05)
+hyp <- hypothesis(fit_poisson2, "habitatForest = 0", alpha = 0.1)
 hyp
 ```
 
@@ -1121,7 +1125,7 @@ fit_poisson2 %>%
   mutate(site = reorder(site, r_site)) %>%
   ggplot(aes(x = r_site, y = site)) +
     geom_vline(xintercept = 0, color = "darkgrey", linewidth = 1) +
-    geom_vline(xintercept = c(sd_mean * qnorm(0.025), sd_mean * qnorm(0.975)),
+    geom_vline(xintercept = c(sd_mean * qnorm(0.05), sd_mean * qnorm(0.95)),
                color = "darkgrey", linetype = 2) +
     stat_halfeye(point_interval = "median_qi", .width = 0.9, size = 2/3,
                  fill = "cornflowerblue")
@@ -1134,17 +1138,17 @@ We gaan even terug naar ons allereerste model waarbij we de Normale verdeling ge
 
 ```{r vergelijking-frequentist}
 # Extraheer samenvattende statistieken Bayesiaans model
-sum_fit_normal1 <- summary(fit_normal1)
+sum_fit_normal1 <- summary(fit_normal1, prob = 0.9)
 verschil_moeras1 <- sum_fit_normal1$fixed$Estimate[2]
-ll_verschil_moeras1 <- sum_fit_normal1$fixed$`l-95% CI`[2]
-ul_verschil_moeras1 <- sum_fit_normal1$fixed$`u-95% CI`[2]
+ll_verschil_moeras1 <- sum_fit_normal1$fixed$`l-90% CI`[2]
+ul_verschil_moeras1 <- sum_fit_normal1$fixed$`u-90% CI`[2]
 
 sum_fit_normal1
 ```
 
 ```{r vergelijking-frequentist-t-test}
 # Voor t-test uit en extraheer samenvattende statistieken
-t_test_normal1 <- t.test(sp_rich ~ habitat, data = ants_df)
+t_test_normal1 <- t.test(sp_rich ~ habitat, data = ants_df, conf.level = 0.9)
 verschil_moeras2 <- t_test_normal1$estimate[2] - t_test_normal1$estimate[1]
 ll_verschil_moeras2 <- -t_test_normal1$conf.int[2]
 ul_verschil_moeras2 <- -t_test_normal1$conf.int[1]
@@ -1152,11 +1156,13 @@ ul_verschil_moeras2 <- -t_test_normal1$conf.int[1]
 t_test_normal1
 ```
 
-We zien dat dit inderdaad bijna exact dezelfde resultaten oplevert. Ons Bayesiaans model schat dat er gemiddeld `r round(verschil_moeras1, 3)` meer mierensoorten in bossen voorkomen dan in moerassen (95 % credible interval: `r round(ll_verschil_moeras1, 3)` tot `r round(ul_verschil_moeras1, 3)`). De t-test schat dat er gemiddeld `r round(verschil_moeras2, 3)` meer mierensoorten in bossen voorkomen dan in moerassen (95 % confidence interval: `r round(ll_verschil_moeras2, 3)` tot `r round(ul_verschil_moeras2, 3)`).
+We zien dat dit inderdaad bijna exact dezelfde resultaten oplevert. Ons Bayesiaans model schat dat er gemiddeld `r round(verschil_moeras1, 3)` meer mierensoorten in bossen voorkomen dan in moerassen (90 % credible interval: `r round(ll_verschil_moeras1, 3)` tot `r round(ul_verschil_moeras1, 3)`). De t-test schat dat er gemiddeld `r round(verschil_moeras2, 3)` meer mierensoorten in bossen voorkomen dan in moerassen (90 % confidence interval: `r round(ll_verschil_moeras2, 3)` tot `r round(ul_verschil_moeras2, 3)`).
 
 
 # Referenties {-}
 
 - Stan User Guide [(link)](https://mc-stan.org/docs/2_18/stan-users-guide/index.html).
+- Brms documentatie [(link)](https://mc-stan.org/users/interfaces/brms).
 - Ben Lambert heeft een [youtube kanaal](https://www.youtube.com/channel/UC3tFZR3eL1bDY8CqZDOQh-w) met a student's guide to Bayesian statistics, een [korte cursus](https://ben-lambert.com/biology/) en [uitgebreidde slides](https://ben-lambert.com/bayesian-lecture-slides/) over Bayesiaanse statistiek.
+- rstanarm vignetten [(link)](https://mc-stan.org/rstanarm/articles/)
 
