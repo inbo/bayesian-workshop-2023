@@ -497,6 +497,9 @@ Er bestaan ook enkele alternatieven:
 - [RStan](https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html) is de basis van `brms`. Je hebt `RStan`nodig om `brms`te kunnen gebruiken omdat het rechtstreeks met Stan communiceert. Een model definiëren in "Pure" Stan code is echter redelijk omslachtig.
 - [rstanarm](https://mc-stan.org/rstanarm/articles/index.html) is nog makkelijker dan `brms`qua syntax. Bovendien kan je met `rstanarm` gebruik maken van enkele vooral gecompileerde Stan modellen. Hierdoor duurt het fitten van je model minder lang. Een groot deel van de procestijd van `brms`gaat immers naar het compileren van het Stan programma.
 
+![Overzicht van verschillende Stan software (bron: https://jtimonen.github.io/posts/post-01/)](software.png)
+
+
 # Een model fitten met brms
 
 ## Dataset laden en data exploratie
