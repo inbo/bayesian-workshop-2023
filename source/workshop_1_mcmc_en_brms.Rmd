@@ -253,8 +253,9 @@ Voor eenvoudige gevallen is een MCMC-algoritme opstellen niet zo complex. Hieron
 Een lineaire regressie met twee te schatten parameters:
 
 $$
-Y = \beta_0 + \beta_1 * X
+\bar{Y} = \beta_0 + \beta_1 * X
 $$
+
 $\beta_0$ = intercept
 
 $\beta_1$ = helling
@@ -281,7 +282,8 @@ lm1 <- lm(formula = y ~ x, data = df_data)
 lm1$coefficients
 ```
 
-Met betrouwbaarheidsinterval
+Met betrouwbaarheidsinterval ($\alpha = 0.1$)
+
 ```{r}
 confint(lm1, level = 0.9)
 ```
@@ -292,7 +294,7 @@ We lezen enkele korte functies in om de (log) likelihood en de prior te berekene
 source(file = "./source/mcmc_functions.R")
 ```
 
-Voor dit eenvoudig model met een kleine dataset kunnen we de posterior voor een groot aantal combinaties voor beta_0 en beta_1 uitrekenen en plotten.
+Voor dit eenvoudig model met een kleine dataset kunnen we de posterior voor een groot aantal combinaties voor `beta_0` en `beta_1` uitrekenen en plotten.
 
 ```{r}
 df <- expand.grid(beta_0 = seq(-1, 15, 0.5), beta_1 = seq(-3, 8, 0.5))
@@ -380,29 +382,34 @@ gridExtra::grid.arrange(p2, ggplot(), p1, p3, ncol = 2, nrow = 2,
 Voor elke parameter kan de MCMC worden weergegeven in een 'trace plot'.
 
 ```{r}
+ann_text <- tibble(param = c("beta_0", "beta_1"),
+                   x = 210,
+                   y = c(max(mcmc_l$beta_0), max(mcmc_l$beta_1)),
+                   lab = "burn-in")
 mcmc_l %>%
   dplyr::select(iter, beta_0, beta_1) %>%
   pivot_longer(cols = c("beta_0", "beta_1"), names_to = "param") %>%
   ggplot(aes(x = iter, y = value)) + geom_line() +
-  facet_wrap(~param, nrow = 2) +
+  facet_wrap(~param, nrow = 2, scales = "free_y") +
   annotate("rect",  xmin = 0, xmax = 200, ymin = -Inf, ymax = +Inf,
            alpha = 0.3, fill = "gold") +
-  annotate("label", label = "burn-in", x = 200, y = 11, hjust = "left",
-           fill = "gold")
+  geom_label(data = ann_text, aes(label = lab, x = x, y = y),
+             hjust = "left", vjust = "top",
+             fill = "gold")
 ```
 
-Schatting voor beta_0 (intercept)
+Schatting voor `beta_0` (intercept)
 ```{r}
 quantile(mcmc_l$beta_0[200:5000], probs = c(0.05, 0.5, 0.95))
 ```
 
-Schatting voor beta_1 (helling)
+Schatting voor `beta_1` (helling)
 ```{r}
 quantile(mcmc_l$beta_1[200:5000], probs = c(0.05, 0.5, 0.95))
 ```
 
 
-De samples in de MCMC liggen dicht bij elkaar. Om meer onafhanekelijke samples te verkrijgen worden slecht elke x waarden van de MCMC gebruikt (Thinning). Dit bespaart ook aanzienlijk geheugenruimte.
+De samples in de MCMC liggen dicht bij elkaar. Om meer onafhanekelijke samples te verkrijgen worden slechts elke x waarden van de MCMC gebruikt (Thinning). Dit bespaart ook aanzienlijk geheugenruimte.
 
 Er bestaan meer gesofesticeerde samplers zoals WinBugs, Jags of Stan, maar het principe is bij MCMC is steeds hetzelfde. 
 
