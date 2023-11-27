@@ -494,7 +494,7 @@ p3
 
 ## MCMC software
 
-Er bestaan een hele boel software programma's die MCMC toepassen voor parameterschattingen.
+Er bestaan een aantal software programma's die MCMC toepassen voor parameterschattingen.
 Jags, Nimble en Stan zijn drie voorbeelden waar een R interface voor bestaat.
 Een [recente vergelijking tussen deze drie](https://arxiv.org/pdf/2107.09357v1.pdf) toont dat ieder van deze drie sterktes en zwaktes hebben maar dat Stan, algemeen, het best presteert.
 
