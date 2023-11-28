@@ -791,7 +791,7 @@ We kunnen over het algemeen besluiten dat MCMC convergentie goed is voor alle pa
 
 ### Model fit
 
-De [posterior predictive check](https://mc-stan.org/bayesplot/articles/graphical-ppcs.html) (PPC) is een goede manier om te controleren of het model goed past bij de data. Het idee achter de PPC is dat, als een model goed past, de voorspelde waardes o.b.v. het model veel lijken op de data die we hebben gebruikt om het model te fitten. Om de voorspellingen te genereren die worden gebruikt voor PPCs, simuleren meerdere malen vanuit de posterior predictive distribution (de posterior distribution van de responsvariabele). Visualisatie kan met de **bayesplot** package. De dikke lijn toont de data en de dunne lijntjes tonen verschillende simulaties o.b.v. het model.
+De [posterior predictive check](https://mc-stan.org/bayesplot/articles/graphical-ppcs.html) (PPC) is een goede manier om te controleren of het model goed past bij de data. Het idee achter de PPC is dat, als een model goed past, de voorspelde waardes o.b.v. het model veel lijken op de data die we hebben gebruikt om het model te fitten. Om de voorspellingen te genereren die worden gebruikt voor PPCs, simuleren  we meerdere malen vanuit de posterior predictive distribution (de posterior distribution van de responsvariabele). Visualisatie kan met de **bayesplot** package. De dikke lijn toont de data en de dunne lijntjes tonen verschillende simulaties o.b.v. het model.
 
 ```{r simpel-model-fit1}
 # Visualiseer model fit via Bayesplot package
