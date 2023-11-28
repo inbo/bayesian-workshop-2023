@@ -156,7 +156,7 @@ Op deze manier hopen we te weten te komen welk model van alle potentiële modell
 Zowel frequentist als bayesiaanse methoden inverteren in essentie $p(X|\lambda) \rightarrow p(\lambda|X)$ maar de methode verschilt.
 
 De maximum likelihood methode in frequentist statistiek zal als parameterschatting de waarde van lambda kiezen waar de likelihood functie maximaal is ($\lambda = 8$).
-Er kan dan ook, bijvoorbeeld, een 90% confidence interval berekend worden rond deze parameterschatting $(4.8 \leq \lambda \leq 14.4)$.
+Er kan dan ook, bijvoorbeeld, een 90 % confidence interval berekend worden rond deze parameterschatting $(4.8 \leq \lambda \leq 14.4)$.
 De beslissingsruimte voor de parameter $\lambda$ wordt dus opgedeeld in twee delen: (1) waarden die waarschijnlijk zijn en (2) waarden die niet waarschijnlijk zijn.
 
 
@@ -253,8 +253,9 @@ Voor eenvoudige gevallen is een MCMC-algoritme opstellen niet zo complex. Hieron
 Een lineaire regressie met twee te schatten parameters:
 
 $$
-Y = \beta_0 + \beta_1 * X
+\bar{Y} = \beta_0 + \beta_1 * X
 $$
+
 $\beta_0$ = intercept
 
 $\beta_1$ = helling
@@ -281,9 +282,10 @@ lm1 <- lm(formula = y ~ x, data = df_data)
 lm1$coefficients
 ```
 
-Met betrouwbaarheidsinterval
+Met betrouwbaarheidsinterval ($\alpha = 0.1$)
+
 ```{r}
-confint(lm1)
+confint(lm1, level = 0.9)
 ```
 
 We lezen enkele korte functies in om de (log) likelihood en de prior te berekenen en het MCMC metropolis algoritme uit te voeren.
@@ -292,7 +294,7 @@ We lezen enkele korte functies in om de (log) likelihood en de prior te berekene
 source(file = "./source/mcmc_functions.R")
 ```
 
-Voor dit eenvoudig model met een kleine dataset kunnen we de posterior voor een groot aantal combinaties voor beta_0 en beta_1 uitrekenen en plotten.
+Voor dit eenvoudig model met een kleine dataset kunnen we de posterior voor een groot aantal combinaties voor `beta_0` en `beta_1` uitrekenen en plotten.
 
 ```{r}
 df <- expand.grid(beta_0 = seq(-1, 15, 0.5), beta_1 = seq(-3, 8, 0.5))
@@ -380,29 +382,34 @@ gridExtra::grid.arrange(p2, ggplot(), p1, p3, ncol = 2, nrow = 2,
 Voor elke parameter kan de MCMC worden weergegeven in een 'trace plot'.
 
 ```{r}
+ann_text <- tibble(param = c("beta_0", "beta_1"),
+                   x = 210,
+                   y = c(max(mcmc_l$beta_0), max(mcmc_l$beta_1)),
+                   lab = "burn-in")
 mcmc_l %>%
   dplyr::select(iter, beta_0, beta_1) %>%
   pivot_longer(cols = c("beta_0", "beta_1"), names_to = "param") %>%
   ggplot(aes(x = iter, y = value)) + geom_line() +
-  facet_wrap(~param, nrow = 2) +
+  facet_wrap(~param, nrow = 2, scales = "free_y") +
   annotate("rect",  xmin = 0, xmax = 200, ymin = -Inf, ymax = +Inf,
            alpha = 0.3, fill = "gold") +
-  annotate("label", label = "burn-in", x = 200, y = 11, hjust = "left",
-           fill = "gold")
+  geom_label(data = ann_text, aes(label = lab, x = x, y = y),
+             hjust = "left", vjust = "top",
+             fill = "gold")
 ```
 
-Schatting voor beta_0 (intercept)
+Schatting voor `beta_0` (intercept)
 ```{r}
 quantile(mcmc_l$beta_0[200:5000], probs = c(0.05, 0.5, 0.95))
 ```
 
-Schatting voor beta_1 (helling)
+Schatting voor `beta_1` (helling)
 ```{r}
 quantile(mcmc_l$beta_1[200:5000], probs = c(0.05, 0.5, 0.95))
 ```
 
 
-De samples in de MCMC liggen dicht bij elkaar. Om meer onafhanekelijke samples te verkrijgen worden slecht elke x waarden van de MCMC gebruikt (Thinning). Dit bespaart ook aanzienlijk geheugenruimte.
+De samples in de MCMC liggen dicht bij elkaar. Om meer onafhankelijke samples te verkrijgen worden slechts elke x waarden van de MCMC gebruikt (Thinning). Dit bespaart ook aanzienlijk geheugenruimte, zonder al te veel in te boeten op de kwaliteit (onafhankelijkheid) van de sample.
 
 Er bestaan meer gesofesticeerde samplers zoals WinBugs, Jags of Stan, maar het principe is bij MCMC is steeds hetzelfde. 
 
@@ -465,7 +472,8 @@ p2 <- ggplot(bimodal) +
   geom_vline(data = measures, aes(xintercept = x), color = "red") +
   geom_label(data = measures,
             aes(label = measures, x = x, y = c(0.1, 0.09, 0.08)), fill = "red",
-            alpha = 0.5)
+            alpha = 0.5) +
+  geom_hline(aes(yintercept = 0.0123), lty = 2)
 p3 <- ggplot(bimodal) +
   geom_vline(data = limits %>% filter(type == "CPI"), aes(xintercept = x)) +
   geom_bar(data = bimodal %>% filter(x >= 9.5 & x <= 37),
@@ -479,13 +487,14 @@ p1
 ```{r, purl = FALSE}
 p2
 ```
+
 ```{r, purl = FALSE}
 p3
 ```
 
 ## MCMC software
 
-Er bestaan een hele boel software programma's die MCMC toepassen voor parameterschattingen.
+Er bestaan een aantal software programma's die MCMC toepassen voor parameterschattingen.
 Jags, Nimble en Stan zijn drie voorbeelden waar een R interface voor bestaat.
 Een [recente vergelijking tussen deze drie](https://arxiv.org/pdf/2107.09357v1.pdf) toont dat ieder van deze drie sterktes en zwaktes hebben maar dat Stan, algemeen, het best presteert.
 
@@ -494,6 +503,9 @@ Er bestaan ook enkele alternatieven:
 
 - [RStan](https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html) is de basis van `brms`. Je hebt `RStan`nodig om `brms`te kunnen gebruiken omdat het rechtstreeks met Stan communiceert. Een model definiëren in "Pure" Stan code is echter redelijk omslachtig.
 - [rstanarm](https://mc-stan.org/rstanarm/articles/index.html) is nog makkelijker dan `brms`qua syntax. Bovendien kan je met `rstanarm` gebruik maken van enkele vooral gecompileerde Stan modellen. Hierdoor duurt het fitten van je model minder lang. Een groot deel van de procestijd van `brms`gaat immers naar het compileren van het Stan programma.
+
+![Overzicht van verschillende Stan software (bron: https://jtimonen.github.io/posts/post-01/)](software.png)
+
 
 # Een model fitten met brms
 
@@ -551,7 +563,8 @@ ants_df %>%
 ants_df %>%
   ggplot(aes(y = sp_rich, x = latitude)) +
     geom_point() +
-    geom_smooth(method = "loess", formula = "y ~ x", colour = "firebrick") +
+    geom_smooth(method = "loess", formula = "y ~ x", colour = "firebrick",
+                level = 0.9) +
     facet_wrap(~habitat)
 ```
 
@@ -561,7 +574,8 @@ ants_df %>%
 ants_df %>%
   ggplot(aes(y = sp_rich, x = elevation)) +
     geom_point() +
-    geom_smooth(method = "loess", formula = "y ~ x", colour = "firebrick") +
+    geom_smooth(method = "loess", formula = "y ~ x", colour = "firebrick",
+                level = 0.9) +
     facet_wrap(~habitat)
 ```
 
@@ -678,10 +692,10 @@ cumquant <- function(x, p) {
 as_draws_df(fit_normal1, variable = parameters) %>%
   mutate(across(all_of(parameters), ~cummean(.x),
                 .names = "{.col}_gemiddelde"),
-         across(all_of(parameters), ~cumquant(.x, 0.1),
-                .names = "{.col}_q10"),
-         across(all_of(parameters), ~cumquant(.x, 0.9),
-                .names = "{.col}_q90")) %>%
+         across(all_of(parameters), ~cumquant(.x, 0.05),
+                .names = "{.col}_q05"),
+         across(all_of(parameters), ~cumquant(.x, 0.95),
+                .names = "{.col}_q95")) %>%
   select(-all_of(parameters)) %>%
   # zet om naar lang formaat voor visualisatie
   pivot_longer(cols = starts_with(parameters), names_to = "name",
@@ -723,16 +737,15 @@ Om de posterior te ontdekken, zouden we een volledige random walk moeten doen do
 In een MCMC zal er vaak wel wat autocorrelatie zijn en het is belangrijk om te controleren of  deze autocorrelatie niet te groot is.
 De zgn. lag geeft aan hoeveel correlatie er is tussen waarden die 1, 2, 3 ... iteraties van elkaar verwijderd zijn.
 Autocorrelatie kan bijvoorbeeld het gevolg zijn van een slecht gekozen step size, een slecht gekozen start locatie, of multimodaliteit in de posterior.
+Als de autocorrelatie hoog is, zal de Markov chain inefficiënt zijn, d.w.z. we zullen veel iteraties nodig hebben om een goede benadering van de posterior distribution te verkrijgen (zie ook effective sample size verderop).
 
 Indien er toch te veel autocorrelatie is, wordt er vaak gebruik gemaakt van verdunning (*thinning*) waarbij sommige iteraties worden verwijderd uit de chain.
-Dit zal de autocorrelatie reduceren maar natuurlijk ook het totaal aantal iteraties ... 
-
+Dit zal de autocorrelatie reduceren maar ook het aantal posterior samples die we overhouden.
 
 ```{r simpel-model-autocorrelation}
 # Visualisatie autocorrelation plots via Bayesplot package
 mcmc_acf(fit_normal1, pars = parameters)
 ```
-
 
 Naast visuele checks zijn er ook *diagnostische controles*.
 
@@ -778,7 +791,7 @@ We kunnen over het algemeen besluiten dat MCMC convergentie goed is voor alle pa
 
 ### Model fit
 
-De [posterior predictive check](https://mc-stan.org/bayesplot/articles/graphical-ppcs.html) (PPC) is een goede manier om te controleren of het model goed past bij de data. Het idee achter de PPC is dat, als een model goed past, de voorspelde waardes o.b.v. het model veel lijken op de data die we hebben gebruikt om het model te fitten. Om de voorspellingen te genereren die worden gebruikt voor PPCs, simuleren we vanuit de posterior predictive distribution (de posterior distribution van de responsvariabele). Visualisatie kan met de **bayesplot** package. De dikke lijn toont de data en de dunne lijntjes tonen verschillende simulaties o.b.v. het model.
+De [posterior predictive check](https://mc-stan.org/bayesplot/articles/graphical-ppcs.html) (PPC) is een goede manier om te controleren of het model goed past bij de data. Het idee achter de PPC is dat, als een model goed past, de voorspelde waardes o.b.v. het model veel lijken op de data die we hebben gebruikt om het model te fitten. Om de voorspellingen te genereren die worden gebruikt voor PPCs, simuleren  we meerdere malen vanuit de posterior predictive distribution (de posterior distribution van de responsvariabele). Visualisatie kan met de **bayesplot** package. De dikke lijn toont de data en de dunne lijntjes tonen verschillende simulaties o.b.v. het model.
 
 ```{r simpel-model-fit1}
 # Visualiseer model fit via Bayesplot package
@@ -950,8 +963,8 @@ Als je ervan uitgaat dat dit verschil normaal verdeeld is, kan je met de onzeker
 comp_loo %>%
   as.data.frame() %>%
   select(elpd_diff, se_diff) %>%
-  mutate(ll_diff = elpd_diff  + qnorm(0.025) * se_diff,
-         ul_diff = elpd_diff  + qnorm(0.975) * se_diff)
+  mutate(ll_diff = elpd_diff  + qnorm(0.05) * se_diff,
+         ul_diff = elpd_diff  + qnorm(0.95) * se_diff)
 ```
 
 ## K-fold cross-validation
@@ -995,8 +1008,8 @@ De resultaten zijn hetzelfde, maar de verschillen zijn iets kleiner als voordien
 comp_kfold %>%
   as.data.frame() %>%
   select(elpd_diff, se_diff) %>%
-  mutate(ll_diff = elpd_diff  + qnorm(0.025) * se_diff,
-         ul_diff = elpd_diff  + qnorm(0.975) * se_diff)
+  mutate(ll_diff = elpd_diff  + qnorm(0.05) * se_diff,
+         ul_diff = elpd_diff  + qnorm(0.95) * se_diff)
 ```
 
 ## WAIC
@@ -1027,8 +1040,8 @@ print(comp_waic, simplify = FALSE, digits = 3)
 comp_waic %>%
   as.data.frame() %>%
   select(waic, elpd_diff, se_diff) %>%
-  mutate(ll_diff = elpd_diff  + qnorm(0.025) * se_diff,
-         ul_diff = elpd_diff  + qnorm(0.975) * se_diff)
+  mutate(ll_diff = elpd_diff  + qnorm(0.05) * se_diff,
+         ul_diff = elpd_diff  + qnorm(0.95) * se_diff)
 ```
 
 ## Conclusie
@@ -1056,8 +1069,10 @@ fit_poisson2 %>%
   group_by(.variable) %>%
   summarise(min = min(.value),
             q_05 = quantile(.value, probs = 0.05),
+            q_20 = quantile(.value, probs = 0.20),
             gemiddelde = mean(.value),
             mediaan = median(.value),
+            q_20 = quantile(.value, probs = 0.80),
             q_95 = quantile(.value, probs = 0.95),
             max = max(.value))
 ```
@@ -1092,10 +1107,12 @@ $$
 $$
 
 Dit kan eenvoudig via de `hypothesis()` functie van de **brms** package.
+Het argument `alpha` specificeert de grootte van het credible interval.
+Dit maakt het testen van hypothesen op een vergelijkbare manier mogelijk als in het frequentistische nulhypothese-testraamwerk.
 
 ```{r resultaten-hypothese-test}
 # Test hypothese verschil tussen habitats
-hyp <- hypothesis(fit_poisson2, "habitatForest = 0", alpha = 0.05)
+hyp <- hypothesis(fit_poisson2, "habitatForest = 0", alpha = 0.1)
 hyp
 ```
 
@@ -1121,7 +1138,7 @@ fit_poisson2 %>%
   mutate(site = reorder(site, r_site)) %>%
   ggplot(aes(x = r_site, y = site)) +
     geom_vline(xintercept = 0, color = "darkgrey", linewidth = 1) +
-    geom_vline(xintercept = c(sd_mean * qnorm(0.025), sd_mean * qnorm(0.975)),
+    geom_vline(xintercept = c(sd_mean * qnorm(0.05), sd_mean * qnorm(0.95)),
                color = "darkgrey", linetype = 2) +
     stat_halfeye(point_interval = "median_qi", .width = 0.9, size = 2/3,
                  fill = "cornflowerblue")
@@ -1130,21 +1147,21 @@ fit_poisson2 %>%
 
 # Vergelijking met frequentist statistics
 
-We gaan even terug naar ons allereerste model waarbij we de Normale verdeling gebruikten. Dit was equivalent aan een lineaire regressie met categorische variabele. Een lineaire regressie met categorische variabele wordt ook wel ANOVA genoemd en indien er maar twee groepen zijn is een ANOVA equivalent aan een t-test. We kunnen dus van de gelegenheid gebruik maken om de resultaten van ons eerst model (een Bayesiaans model) te vergelijken met de resultaten van een klassieke (frequentist) t-test.
+We gaan even terug naar ons allereerste model waarbij we de Normale verdeling gebruikten. Dit was equivalent aan een lineaire regressie met categorische variabele. Een lineaire regressie met categorische variabele wordt ook wel ANOVA genoemd en indien er maar twee groepen zijn, is een ANOVA equivalent aan een t-test. We kunnen dus van de gelegenheid gebruik maken om de resultaten van ons eerst model (een Bayesiaans model) te vergelijken met de resultaten van een klassieke (frequentist) t-test.
 
 ```{r vergelijking-frequentist}
 # Extraheer samenvattende statistieken Bayesiaans model
-sum_fit_normal1 <- summary(fit_normal1)
+sum_fit_normal1 <- summary(fit_normal1, prob = 0.9)
 verschil_moeras1 <- sum_fit_normal1$fixed$Estimate[2]
-ll_verschil_moeras1 <- sum_fit_normal1$fixed$`l-95% CI`[2]
-ul_verschil_moeras1 <- sum_fit_normal1$fixed$`u-95% CI`[2]
+ll_verschil_moeras1 <- sum_fit_normal1$fixed$`l-90% CI`[2]
+ul_verschil_moeras1 <- sum_fit_normal1$fixed$`u-90% CI`[2]
 
 sum_fit_normal1
 ```
 
 ```{r vergelijking-frequentist-t-test}
 # Voor t-test uit en extraheer samenvattende statistieken
-t_test_normal1 <- t.test(sp_rich ~ habitat, data = ants_df)
+t_test_normal1 <- t.test(sp_rich ~ habitat, data = ants_df, conf.level = 0.9)
 verschil_moeras2 <- t_test_normal1$estimate[2] - t_test_normal1$estimate[1]
 ll_verschil_moeras2 <- -t_test_normal1$conf.int[2]
 ul_verschil_moeras2 <- -t_test_normal1$conf.int[1]
@@ -1152,11 +1169,16 @@ ul_verschil_moeras2 <- -t_test_normal1$conf.int[1]
 t_test_normal1
 ```
 
-We zien dat dit inderdaad bijna exact dezelfde resultaten oplevert. Ons Bayesiaans model schat dat er gemiddeld `r round(verschil_moeras1, 3)` meer mierensoorten in bossen voorkomen dan in moerassen (95 % credible interval: `r round(ll_verschil_moeras1, 3)` tot `r round(ul_verschil_moeras1, 3)`). De t-test schat dat er gemiddeld `r round(verschil_moeras2, 3)` meer mierensoorten in bossen voorkomen dan in moerassen (95 % confidence interval: `r round(ll_verschil_moeras2, 3)` tot `r round(ul_verschil_moeras2, 3)`).
+We zien dat dit inderdaad bijna exact dezelfde resultaten oplevert. Ons Bayesiaans model schat dat er gemiddeld `r round(verschil_moeras1, 3)` meer mierensoorten in bossen voorkomen dan in moerassen (90 % credible interval: `r round(ll_verschil_moeras1, 3)` tot `r round(ul_verschil_moeras1, 3)`). De t-test schat dat er gemiddeld `r round(verschil_moeras2, 3)` meer mierensoorten in bossen voorkomen dan in moerassen (90 % confidence interval: `r round(ll_verschil_moeras2, 3)` tot `r round(ul_verschil_moeras2, 3)`).
 
 
 # Referenties {-}
 
 - Stan User Guide [(link)](https://mc-stan.org/docs/2_18/stan-users-guide/index.html).
+- Brms documentatie [(link)](https://mc-stan.org/users/interfaces/brms).
 - Ben Lambert heeft een [youtube kanaal](https://www.youtube.com/channel/UC3tFZR3eL1bDY8CqZDOQh-w) met a student's guide to Bayesian statistics, een [korte cursus](https://ben-lambert.com/biology/) en [uitgebreidde slides](https://ben-lambert.com/bayesian-lecture-slides/) over Bayesiaanse statistiek.
-
+- rstanarm vignetten [(link)](https://mc-stan.org/rstanarm/articles/)
+- nog enkele handige packages die met brms objecten kunnen werken
+  - **posterior** handige hulpmiddelen voor het aanpassen van Bayesiaanse modellen of het werken met output van Bayesiaanse modellen [(link)](https://mc-stan.org/posterior/)
+  - **projpred** selectie van de belangrijkste verklarende variabelen in je model via projection prediction [(link)](https://mc-stan.org/projpred/)
+  - **performance** samenbrengen van technieken voor model kwaliteit en fit [(link)](https://easystats.github.io/performance/)
