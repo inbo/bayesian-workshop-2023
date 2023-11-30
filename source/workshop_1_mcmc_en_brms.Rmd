@@ -607,7 +607,8 @@ Eerst en vooral besluiten we welke MCMC parameters we zullen gebruiken. Typ `?br
 nchains <- 3           # aantal chains
 niter <- 2000          # aantal iteraties (incl. burn-in, zie volgende)
 burnin <- niter / 4    # aantal initiële samples om te verwijderen (= burn-in)
-nparallel <- nchains   # aantal cores voor parallel computing
+nb_cores <- parallel::detectCores() # aantal cores op je computer
+nparallel <- min(nchains, nb_cores - 1)   # aantal cores voor parallel computing
 thinning <- 1          # verdunningsfactor (hier 1 = geen verdunning)
 ```
 
