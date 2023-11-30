@@ -9,6 +9,8 @@ output:
     toc: true
     toc_float: true
     toc_collapsed: true
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include = FALSE, purl = FALSE}
@@ -1072,7 +1074,7 @@ fit_poisson2 %>%
             q_20 = quantile(.value, probs = 0.20),
             gemiddelde = mean(.value),
             mediaan = median(.value),
-            q_20 = quantile(.value, probs = 0.80),
+            q_80 = quantile(.value, probs = 0.80),
             q_95 = quantile(.value, probs = 0.95),
             max = max(.value))
 ```
