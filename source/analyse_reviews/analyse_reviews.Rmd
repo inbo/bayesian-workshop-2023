@@ -1,0 +1,69 @@
+---
+title: "Analyse Bayesian Statistics Reviews"
+author: "Raïsa Carmen"
+date: "`r Sys.Date()`"
+output: html_document
+params:
+  source: "google"
+---
+
+```{r setup, include=FALSE}
+#choose source: "google" to download the data from google drive
+#choose source: "local" to continue with the loaclly saved file
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(googlesheets4)
+library(rprojroot)
+library(git2rdata)
+```
+
+```{r read-google, eval = (params$source == "google")}
+data <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1gLOOjaMKXBkB4ps8ac6RBTQAnZiR7w1dJBobK9JwexM/edit#gid=1267380515") #nolint
+header <- data.frame(
+  full = colnames(data),
+  short =  c("Timestamp", "ervaren_statistiek",
+                    "ervaren_bayesiaanse_statistiek", "ervaren_r",
+                    "ervaren_andere_software", "infomoment", "eval_structuur",
+                    "eval_begrijpen", "eval_afgestemd", "eval_aanpak",
+                    "eval_vragen", "eval_tempo", "eval_tevreden",
+                    "eval_verwacht", "eval_toepasbaar", "ontbrekende_themas",
+                    "geavanceerde_cursus_ja_nee", "geavanceerde_cursus_thema", 
+                    "opmerkingen", "naam_voornaam", "opmerkingen_einde"))
+colnames(data) <- header$short
+#save the raw data
+write_vc(x = data,
+         "data_bayesian_1",
+         root =
+           find_root_file("data",
+                          criterion = has_file("bayesian-workshop-2023.Rproj")),
+         sorting = "Timestamp")
+```
+
+
+```{r read-local, eval = (params$source == "local")}
+data <-
+  read_vc("data_bayesian_1",
+          root = find_root_file(
+            "data",
+            criterion = has_file("bayesian-workshop-2023.Rproj"))) #nolint
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
