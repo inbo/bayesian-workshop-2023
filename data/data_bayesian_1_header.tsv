@@ -1,0 +1,22 @@
+full	short
+Hoe ervaren ben je met: [Andere statistische softwarepakketten]	ervaren_andere_software
+Hoe ervaren ben je met: [Bayesiaanse statistiek]	ervaren_bayesiaanse_statistiek
+Hoe ervaren ben je met: [R(studio)]	ervaren_r
+Hoe ervaren ben je met: [Statistiek]	ervaren_statistiek
+Hoe evalueer je de les Bayesiaanse statistiek? [De aanpak van de lesgevers was goed.]	eval_aanpak
+Hoe evalueer je de les Bayesiaanse statistiek? [De inhoud was voldoende afgestemd op de doelstellingen en het doelpubliek.]	eval_afgestemd
+Hoe evalueer je de les Bayesiaanse statistiek? [De inhoud was goed te begrijpen.]	eval_begrijpen
+Hoe evalueer je de les Bayesiaanse statistiek? [De inhoud was logisch en goed gestructureerd.]	eval_structuur
+Hoe evalueer je de les Bayesiaanse statistiek? [Het tempo van de les was gepast.]	eval_tempo
+Hoe evalueer je de les Bayesiaanse statistiek? [Ik ben over het algemeen tevreden over de opleiding.]	eval_tevreden
+Hoe evalueer je de les Bayesiaanse statistiek? [Wat ik geleerd heb, kan ik toepassen op mijn werk.]	eval_toepasbaar
+Hoe evalueer je de les Bayesiaanse statistiek? [De opleiding beantwoordde aan mijn verwachtingen (en de communicatie hieromtrent).]	eval_verwacht
+Hoe evalueer je de les Bayesiaanse statistiek? [Ik kreeg voldoende gelegenheid om vragen te stellen.]	eval_vragen
+Zou je graag een geavanceerdere cursus volgen over Bayesiaanse statistiek?	geavanceerde_cursus_ja_nee
+Welk onderwerp zou jij graag behandelen in een vervolgcursus? (meerdere antwoorden mogelijk)	geavanceerde_cursus_thema
+Heb je het infomoment Bayesiaanse statistiek gevolgd (op 24 oktober 2023)?	infomoment
+Naam en voornaam (optioneel)	naam_voornaam
+Welke thema's ontbraken of kwamen te weinig/teveel aan bod?	ontbrekende_themas
+Opmerkingen:	opmerkingen
+Heb je nog opmerkingen,  suggesties of andere feedback?	opmerkingen_einde
+Timestamp	Timestamp
