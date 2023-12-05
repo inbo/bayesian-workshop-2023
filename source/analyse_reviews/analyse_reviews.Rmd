@@ -15,6 +15,7 @@ library(tidyverse)
 library(googlesheets4)
 library(rprojroot)
 library(git2rdata)
+library(ggstats)
 ```
 
 ```{r read-google, eval = (params$source == "google")}
@@ -37,6 +38,12 @@ write_vc(x = data,
            find_root_file("data",
                           criterion = has_file("bayesian-workshop-2023.Rproj")),
          sorting = "Timestamp")
+write_vc(x = header,
+         "data_bayesian_1_header",
+         root =
+           find_root_file("data",
+                          criterion = has_file("bayesian-workshop-2023.Rproj")),
+         sorting = "short")
 ```
 
 
@@ -46,24 +53,121 @@ data <-
           root = find_root_file(
             "data",
             criterion = has_file("bayesian-workshop-2023.Rproj"))) #nolint
+header <-
+  read_vc("data_bayesian_1_header",
+          root = find_root_file(
+            "data",
+            criterion = has_file("bayesian-workshop-2023.Rproj"))) #nolint
+```
+# Inleiding
+
+In oktober 2023 werd er een infomoment georganiseerd over Bayesiaanse statistiek om INBO medewerkers op een laagdrempelige manier uit te leggen wat het is en hoe het verschilt van frequentist statistiek.
+Tegelijkertijd was het ook de bedoeling om ze warm te maken om een statistische opleiding rond Bayesiaanse statistiek te volgen.
+
+Door de grote interesse werd de opleiding Bayesiaanse statistiek drie keer gegeven in het HT gebouw; 13, 14 en 30 november.
+In totaal volgden er respectievelijk 8, 18 en 22 mensen de lessen (48 mensen in totaal).
+Iedereen werd gevraagd om de cursus te beoordelen door middel van een google form.
+`r nrow(data)` medewerkers vulden de bevraging in.
+Dit rapport beschrijft het resultaat van deze beoordelingen.
+
+# Resultaten
+
+## Deelnemers
+
+Figuur \@ref(fig:ervaring) toont dat de meeste deelnemers ervaren zijn met statistiek en R(studio).
+De kennis van Bayesiaanse statistiek is echter beperkt, alsook de kennis van andere statistische softwarepakketten.
+
+```{r ervaring, fog.cap = "Ervaring van de deelnemers."}
+lbl <- header %>%
+  filter(str_detect(short, "ervaren_")) %>%
+  dplyr::pull(full)
+names(lbl) <- header %>%
+  filter(str_detect(short, "ervaren_")) %>%
+  dplyr::pull(short)
+
+data %>%
+  dplyr::select(starts_with("ervaren")) %>%
+  mutate_all(function(x) {as.factor(x) %>%
+               factor(levels = c("Helemaal niet ervaren", "Niet ervaren",
+                                 "Gemiddeld", "Ervaren", "Heel ervaren"),
+                      ordered = TRUE)}) %>%
+  gglikert(variable_labels = lbl,
+           y_label_wrap = 25)
 ```
 
-## R Markdown
+`r round(100*sum(data$infomoment =="Ja")/nrow(data))` procent van de deelnemers gaf bovendien aan dat ze het infomoment over Bayesiaanse statistiek in oktober gevolgd hadden. 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## Evaluatie les Bayesiaanse statistiek
 
-```{r cars}
-summary(cars)
+De deelnemers werden bevraagd over:
+
+- De inhoud van de les (eerste 3 vragen in Figuur \@ref(fig:eval-likert)).
+- Hoe de les gegeven wordt (vraag 4 tot en met 6 in Figuur \@ref(fig:eval-likert)).
+- De relevantie van de les (vraag 7 tot en met 9 in Figuur \@ref(fig:eval-likert)).
+
+```{r eval-likert, fig.cap = "Evaluatie van de les."}
+lbl <- header %>%
+  filter(str_detect(short, "eval_")) %>%
+  mutate(full =
+           str_remove(full,
+                      "Hoe evalueer je de les Bayesiaanse statistiek\\? \\["),
+         full = str_remove(full, "\\]")) %>%
+  dplyr::pull(full)
+names(lbl) <- header %>%
+  filter(str_detect(short, "eval_")) %>%
+  dplyr::pull(short)
+
+data %>%
+  dplyr::select(starts_with("eval")) %>%
+  mutate_all(function(x) {as.factor(x) %>%
+               factor(levels = c("Helemaal niet akkoord", "Niet akkoord",
+                                 "Neutraal", "Akkoord", "Helemaal akkoord"),
+                      ordered = TRUE)}) %>%
+  gglikert(variable_labels = lbl,
+           y_label_wrap = 25)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+## Toekomstige cursussen
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+We maakten gebruik van de gelegenheid om de cursisten ook te bevragen over hun interesse in vervolgcursussen Bayesiaanse statistiek.
+
+In totaal waren `r sum(data$geavanceerde_cursus_ja_nee == "Ja")` (`r round(100*sum(data$geavanceerde_cursus_ja_nee == "Ja")/nrow(data))`%) personen geïnteresseerd in een vervolgcursus, waren `r sum(data$geavanceerde_cursus_ja_nee == "Misschien")` (`r round(100*sum(data$geavanceerde_cursus_ja_nee == "Misschien")/nrow(data))`%) misschien geïnteresseerd en waren `r sum(data$geavanceerde_cursus_ja_nee == "Nee")` (`r round(100*sum(data$geavanceerde_cursus_ja_nee == "Nee")/nrow(data))`%) niet geïnteresseerd.
+
+Alle cursisten die (misschien) geïnteresseerd zijn in een vervolgcursus, werd gevraagd in welke thema's ze interesse hadden. Ze mochten meerdere thema's aanduiden.
+Figuur \@ref(fig:vervolg) toont dat mixed models, populatiemodellering en GAM's het meest populair zijn.
+
+```{r vervolg, fig.cap = "Interesse in geavanceerdere cursus in de toekomst."}
+answers <- str_split(as.character(
+  paste(data$geavanceerde_cursus_thema, collapse = ",")),
+  pattern = ",")
+answers <- sapply(answers, function(x) str_trim(x))
+answers <- answers[!(answers %in% c("NA", ""))]
+vervolg <- data.frame(vervolgcursus = answers) %>%
+  group_by(vervolgcursus) %>%
+  summarize(n = n())
+
+ggplot(vervolg) +
+  geom_bar(aes(x = reorder(vervolgcursus, n), y = n),
+               stat = "identity") +
+  coord_flip() +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 25)) +
+  ylab("Aantal cursusten die geïnteresseerd zijn") +
+  xlab("")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Opmerkingen in tekstvelden
+
+Doorheen de bevragen kregen de cursisten verschillende keren de kans om opmerkingen toe te voegen in tekstvelden.
+Over het algemeen bevatten deze tekst velden positieve feedback.
+Onderstaande tabellen tonen alle feedback.
+
+
+# Berekening KPI
+
+Als we aan ieder van de evaluatie categorieën (Figuur \@ref(fig:eval-likert) een cijfer toekennen, kunnen we een gemiddelde score berekenen:
+
+
+
+# Conclusie
