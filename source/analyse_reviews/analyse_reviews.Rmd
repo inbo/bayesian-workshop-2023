@@ -1,13 +1,15 @@
 ---
-title: "Analyse Bayesian Statistics Reviews"
+title: "Analyse van de tevredenheidsenquête over de les Bayesiaanse Statistiek"
 author: "Raïsa Carmen"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  bookdown::html_document2: default
+  bookdown::pdf_document2: default
 params:
-  source: "google"
+  source: "local"
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, message = FALSE, warning=FALSE}
 #choose source: "google" to download the data from google drive
 #choose source: "local" to continue with the loaclly saved file
 knitr::opts_chunk$set(echo = FALSE)
@@ -16,9 +18,10 @@ library(googlesheets4)
 library(rprojroot)
 library(git2rdata)
 library(ggstats)
+library(kableExtra)
 ```
 
-```{r read-google, eval = (params$source == "google")}
+```{r read-google, eval = (params$source == "google"), message = FALSE, warning=FALSE}
 data <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1gLOOjaMKXBkB4ps8ac6RBTQAnZiR7w1dJBobK9JwexM/edit#gid=1267380515") #nolint
 header <- data.frame(
   full = colnames(data),
@@ -47,7 +50,7 @@ write_vc(x = header,
 ```
 
 
-```{r read-local, eval = (params$source == "local")}
+```{r read-local, eval = (params$source == "local"), message = FALSE, warning=FALSE}
 data <-
   read_vc("data_bayesian_1",
           root = find_root_file(
@@ -77,7 +80,7 @@ Dit rapport beschrijft het resultaat van deze beoordelingen.
 Figuur \@ref(fig:ervaring) toont dat de meeste deelnemers ervaren zijn met statistiek en R(studio).
 De kennis van Bayesiaanse statistiek is echter beperkt, alsook de kennis van andere statistische softwarepakketten.
 
-```{r ervaring, fog.cap = "Ervaring van de deelnemers."}
+```{r ervaring, fig.cap = "Ervaring van de deelnemers."}
 lbl <- header %>%
   filter(str_detect(short, "ervaren_")) %>%
   dplyr::pull(full)
@@ -163,11 +166,82 @@ Doorheen de bevragen kregen de cursisten verschillende keren de kans om opmerkin
 Over het algemeen bevatten deze tekst velden positieve feedback.
 Onderstaande tabellen tonen alle feedback.
 
+```{r }
+data %>%
+  dplyr::select(ontbrekende_themas) %>%
+  filter(!is.na(ontbrekende_themas)) %>%
+  kable(booktabs = TRUE,
+        caption = "Antwoord op de vraag of er ontbrekende thema's waren in de les.") %>%
+  kableExtra::kable_styling() %>%
+  kableExtra::column_spec(1, width = 6)
+```
+
+```{r }
+data %>%
+  dplyr::select(opmerkingen) %>%
+  filter(!is.na(opmerkingen)) %>%
+  kable(booktabs = TRUE,
+        caption = "Opmerkingen bij de keuze van een onderwerp voor een vervolgcursus.") %>%
+  kableExtra::kable_styling() %>%
+  kableExtra::column_spec(1, width = 6)
+```
+
+```{r }
+data %>%
+  dplyr::select(opmerkingen_einde) %>%
+  filter(!is.na(opmerkingen_einde)) %>%
+  kable(booktabs = TRUE,
+        caption = "Opmerkingen op het einde van de bevraging.") %>%
+  kableExtra::kable_styling() %>%
+  kableExtra::column_spec(1, width = 6)
+```
 
 # Berekening KPI
 
 Als we aan ieder van de evaluatie categorieën (Figuur \@ref(fig:eval-likert) een cijfer toekennen, kunnen we een gemiddelde score berekenen:
 
+- "Helemaal niet akkoord" krijgt een score van 1
+- "Niet akkoord" krijgt een score van 2
+- "Neutraal" krijgt een score van 3
+- "Akkoord" krijgt een score van 4
+- "Helemaal akkoord" krijgt een score van 5
+
+```{r kpi1, fig.cap = "Verdeling van de scores per lesonderdeel en algemeen. Het blauwe punt toont de mediaan. De rode driehoek toont het gemiddelde."}
+data_num <- data %>%
+  dplyr::select(starts_with("eval")) %>%
+  pivot_longer(cols = starts_with("eval")) %>%
+  mutate(categorie = rep(c(rep("inhoud", 3),
+                       rep("lesgeven", 3),
+                       rep("relevantie", 3)), nrow(data))) %>%
+  mutate(value_num =
+           as.numeric(factor(as.factor(value),
+                             levels = c("Helemaal niet akkoord", "Niet akkoord",
+                                        "Neutraal", "Akkoord",
+                                        "Helemaal akkoord"),
+                             ordered = TRUE)))
+data_num %>%
+  rbind(data_num %>%
+          mutate(categorie = "algemeen")) %>%
+  ggplot(aes(x = value_num, y = as.factor(categorie))) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = "point", shape = 2, size = 2, color = "red",
+               fill = "red") +
+  stat_summary(fun = median, geom = "point", shape = 20, size = 5,
+               color = "blue", fill = "blue") +
+  ylab("") +
+  xlab("score")
+```
+
+Voor de verwerking van de (ordinale) scores gebruiken we twee maten.
+De gemiddelde scores gebruiken we als een globale synthese. Het streefdoel is een **gemiddelde** van 4 op 5.
+Daarnaast bekijken we meer in detail de verdeling over de klassen 1-2 (slecht), 3 (middelmatig) en 4-5 (goed).
+Het streefdoel is de **proportie slecht (1-2)** onder de 10% te houden.
+
+De gemiddelde, algemene score is `r mean(data_num$value_num)` en het percentage lage scores (1 of 2) is `r round(mean(data_num$value_num %in% c(1, 2))*100, 2)`%.
+Deze les voldoet dus ruim aan deze kwaliteitseisen.
+De vragen die een lagere score kregen waren
+"`r header[header$short == "eval_toepasbaar", "full"] %>% str_remove("Hoe evalueer je de les Bayesiaanse statistiek\\? \\[") %>% str_remove("\\]")`" (1 keer "Helemaal niet akkoord" en 3 keer "Niet akkoord") en "`r header[header$short == "eval_verwacht", "full"] %>% str_remove("Hoe evalueer je de les Bayesiaanse statistiek\\? \\[") %>% str_remove("\\]")`" (1 keer "Niet akkoord").
 
 
 # Conclusie
+Over het algemeen waren de mensen die de bevraging invulden tevreden over de les Bayesiaanse Statistiek. 
