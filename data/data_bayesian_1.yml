@@ -3,8 +3,8 @@
   optimize: yes
   NA string: NA
   sorting: Timestamp
-  hash: 7c5d1f446e2730745f5a29c36db0467bf1652013
-  data_hash: cd5568d0450d8c63ddda24701aad95e1b72b4492
+  hash: 31188c77771bfa647d648ea6de78c504e3c25344
+  data_hash: 4848cf4b0f1a364c79b2dbd1ea7191a51146138e
 Timestamp:
   class: POSIXct
   origin: 1970-01-01 00:00:00
@@ -44,8 +44,6 @@ geavanceerde_cursus_ja_nee:
 geavanceerde_cursus_thema:
   class: character
 opmerkingen:
-  class: character
-naam_voornaam:
   class: character
 opmerkingen_einde:
   class: character
