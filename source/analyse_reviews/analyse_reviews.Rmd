@@ -22,7 +22,8 @@ library(kableExtra)
 ```
 
 ```{r read-google, eval = (params$source == "google"), message = FALSE, warning=FALSE}
-data <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1gLOOjaMKXBkB4ps8ac6RBTQAnZiR7w1dJBobK9JwexM/edit#gid=1267380515") #nolint
+data <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1gLOOjaMKXBkB4ps8ac6RBTQAnZiR7w1dJBobK9JwexM/edit#gid=1267380515") %>% #nolint
+  dplyr::select(-`Naam en voornaam (optioneel)`)
 header <- data.frame(
   full = colnames(data),
   short =  c("Timestamp", "ervaren_statistiek",
@@ -32,7 +33,7 @@ header <- data.frame(
                     "eval_vragen", "eval_tempo", "eval_tevreden",
                     "eval_verwacht", "eval_toepasbaar", "ontbrekende_themas",
                     "geavanceerde_cursus_ja_nee", "geavanceerde_cursus_thema", 
-                    "opmerkingen", "naam_voornaam", "opmerkingen_einde"))
+                    "opmerkingen", "opmerkingen_einde"))
 colnames(data) <- header$short
 #save the raw data
 write_vc(x = data,
@@ -237,7 +238,7 @@ De gemiddelde scores gebruiken we als een globale synthese. Het streefdoel is ee
 Daarnaast bekijken we meer in detail de verdeling over de klassen 1-2 (slecht), 3 (middelmatig) en 4-5 (goed).
 Het streefdoel is de **proportie slecht (1-2)** onder de 10% te houden.
 
-De gemiddelde, algemene score is `r mean(data_num$value_num)` en het percentage lage scores (1 of 2) is `r round(mean(data_num$value_num %in% c(1, 2))*100, 2)`%.
+De gemiddelde, algemene score is `r round(mean(data_num$value_num), 2)` en het percentage lage scores (1 of 2) is `r round(mean(data_num$value_num %in% c(1, 2))*100, 2)`%.
 Deze les voldoet dus ruim aan deze kwaliteitseisen.
 De vragen die een lagere score kregen waren
 "`r header[header$short == "eval_toepasbaar", "full"] %>% str_remove("Hoe evalueer je de les Bayesiaanse statistiek\\? \\[") %>% str_remove("\\]")`" (1 keer "Helemaal niet akkoord" en 3 keer "Niet akkoord") en "`r header[header$short == "eval_verwacht", "full"] %>% str_remove("Hoe evalueer je de les Bayesiaanse statistiek\\? \\[") %>% str_remove("\\]")`" (1 keer "Niet akkoord").
