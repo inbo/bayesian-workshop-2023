@@ -78,7 +78,7 @@ Dit rapport beschrijft het resultaat van deze beoordelingen.
 
 ## Deelnemers
 
-Figuur \@ref(fig:ervaring) toont dat de meeste deelnemers ervaren zijn met statistiek en R(studio).
+Figuur \@ref(fig:ervaring) toont dat de meeste deelnemers ervaren zijn met statistiek en R(Studio).
 De kennis van Bayesiaanse statistiek is echter beperkt, alsook de kennis van andere statistische softwarepakketten.
 
 ```{r ervaring, fig.cap = "Ervaring van de deelnemers."}
