@@ -1,5 +1,5 @@
 ---
-title: "Workshop Bayesian statistics 2023"
+title: "Tutorial Bayesian statistics"
 subtitle: "1. MCMC, model specification with brms and output interpretation"
 author: "Raïsa Carmen, Ward Langeraert & Toon Van Daele"
 date: "`r Sys.Date()`"
@@ -102,7 +102,7 @@ Our model defines a collection of probability models; one for each possible valu
 We call this collection of models the *likelihood*.
 
 In the figure below we show three examples of a potential likelihood.
-They are three probability density functions of Poisson distributions, each with a different parameter $\lambda$.
+There are three probability density functions of Poisson distributions, each with a different parameter $\lambda$.
 
 
 ```{r, purl = FALSE}
@@ -134,10 +134,10 @@ likelihood %>%
   facet_grid(cols = vars(lambda))
 ```
 
-Each of these models, with a different value of $\lambda$, can give us the value of $X=8$.
+Each of these models, with a different value of $\lambda$, can give us the value of $X=8$ with a different probability.
 
 The likelihood function gives us, for each potential value of the parameter, the probability of the data.
-The figure below shows this for our data with only one observation $X=8$.
+The figure below shows this for our data with only one observation $x=8$.
 
 ```{r, purl = FALSE}
 ll <- data.frame(lambda = seq(0, 20, 0.2)) %>%
@@ -185,12 +185,12 @@ In our example, the following meaning is given to each of the elements in Bayes'
 - $p(\lambda|X)$ is the *posterior*. It is a probability distribution. This posterior is the starting point for all further analysis in Bayesian inference.
 
 
-On this [website](https://iupbsapps.shinyapps.io/KruschkeFreqAndBayesApp/) you will find a nice illustration of how prior and likelihood are combined to obtain a posterior ([tutorial](https://jkkweb.sitehost. iu.edu/KruschkeFreqAndBayesAppTutorial.html)).
+On this [website](https://iupbsapps.shinyapps.io/KruschkeFreqAndBayesApp/) you will find a nice illustration of how prior and likelihood are combined to obtain a posterior ([tutorial](https://jkkweb.sitehost.iu.edu/KruschkeFreqAndBayesAppTutorial.html)).
 
 
-**An easier example of Bayes' rule**
+**An simple example of Bayes' rule**
 
-Suppose you go to the doctor and he says you test positive for a rare disease.
+Suppose you go to the doctor, and he says you test positive for a rare disease.
 However, he also tells you that the test cannot always be trusted.
 In Belgium, only 0.1% of all people actually have the disease.
 If you have the disease, the test is positive in $\frac{99}{100}$ tests. But even if you do not have the disease, the test will be positive in $\frac{5}{100}$ tests.
@@ -214,7 +214,7 @@ $$
 p(\lambda|X) = \frac{p(X|\lambda) * p(\lambda)}{p(X)}
 $$
 
-We already mentioned that the denominatorof this equation is very difficult to calculate.
+We already mentioned that the denominator of this equation is very difficult to calculate.
 There are three possible solutions:
 
 - *Conjugate priors*: For some distributions and combinations of priors and likelihoods, it is possible to obtain an analytical solution (see [this list](https://en.wikipedia.org/wiki/Conjugate_prior)). However, this limits our options:
@@ -223,19 +223,20 @@ There are three possible solutions:
 - *MCMC*: we get information about the distribution by sampling it instead of calculating it exactly.
 - *INLA*: Integrated Nested Laplace Approximation is an alternative to MCMC. There is no sampling, which makes the algorithm work faster. This is especially interesting for large or complex models.
 
-We will focus on MCMC in this workshop.
+We will focus on MCMC in this tutorial.
 
 ### What is MCMC?
 
-MCMC stands for 'Markov chain Monte Carlo'. Markov chain is an algorithm to simulate a random walk and Monte Carlo is an algorithm to explore the parameter space.
+MCMC stands for 'Markov chain Monte Carlo'. A Markov chain is an algorithm to simulate a random walk and Monte Carlo is an algorithm to sample from the parameter space.
 
-The posterior distribution can be compared to a mountain (see figure below). The top of the mountain is where the parameter value is most likely after combining the likelihood of your data with your prior. However, the location and shape of the mountain peak is unknown. The goal of an MCMC algorithm is to efficiently explore the mountain peak and its surroundings.
+The posterior distribution of a parameter can be compared to a mountain (see figure below). The top of the mountain is where the parameter value is most likely after combining the likelihood of your data with your prior belief. However, the location and shape of the mountain peak is unknown. The goal of an MCMC algorithm is to efficiently explore the mountain peak and its surroundings.
 
-An MCMC algorithm takes random samples from the posterior and generates a series of steps that explores the entire range of the posterior distribution. The rules ensure that the sampler stays near the top of the mountain the entire time. It is a random walk in the parameter space in the area where the posterior distribution is highest (the top of the mountain). The size and direction of the step varies.
+An MCMC algorithm takes random samples from the posterior and generates a series of steps that explores the entire range of the posterior distribution. The rules ensure that the sampler stays near the top of the mountain the entire time. It is a random walk in the parameter space where the posterior distribution is highest (the top of the mountain). The size and direction of each step varies.
 
-When taking a step uphill, the MCMC always continues. If the step is downhill, the MCMC does not always continue. The probability of going downhill depends on how deep the step down is. Small steps downward are often taken. If the step downwards is very steep, the MCMC usually will not go into that directions and sample a new step.
+When taking a step uphill, the MCMC always continues. If the step is downhill, the MCMC does not always continue. The probability of going downhill depends on how deep the step down is. Small steps downwards are often taken. If the step downwards is very steep, the MCMC usually will not go into that direction and sample a new step.
 
 The absolute height of the mountain (posterior likelihood) in itself does not matter. Only the relative differences or shape of the mountain matters.
+This means that we do not need to calculate the denominator of Bayes' rule, which is the reason why the algorithm is frequently used in Bayesian statistics.
 
 ![Metropolis rules](../media/MCMC4b.png)
 
@@ -248,7 +249,7 @@ A simple MCMC algorithm is the Metropolis algorithm. It is described by these fo
 5. Is the new posterior $>$ current posterior $\Rightarrow$ new value kept
 6. Is the new posterior $<$ current posterior $\Rightarrow$
    a) Calculate the ratio (new posterior / previous posterior).
-   b) Accept the new value with a probability equal to the ratio. (so the lower the new likelihood, the smaller the chance of acceptance.
+   b) Accept the new value with a probability equal to the ratio (so the lower the new likelihood, the smaller the chance of acceptance).
 7. Go through 3 to 6 (several thousand times).
 
 Since the probability of accepting or not accepting parameter values with a lower posterior varies with the difference in posterior value, an MCMC converges in the limit (after many iterations) to the posterior distribution.
@@ -341,9 +342,9 @@ ggplot(df, aes(x = beta_0, y = beta_1, z = post)) +
   theme(legend.position = "none")
 ```
 
-The starting value quite far from the maximum likelihood.
+The starting value is quite far from the maximum likelihood.
 It takes a while for the MCMC to stabilize in the vicinity of the top of the mountain.
-Therefore, the first part of the MCMC is never used. This is the 'burn-in' (or warm-up in BRMS).
+Therefore, the first part of the MCMC is never used. This is called the 'burn-in' or 'warm-up'.
 
 We now run the same model, but with a much longer MCMC (more iterations):
 
@@ -384,7 +385,7 @@ gridExtra::grid.arrange(p2, ggplot(), p1, p3, ncol = 2, nrow = 2,
   widths = c(4, 1), heights = c(1, 4))
 ```
 
-The MCMC for each parameter can be displayed in a 'trace plot'.
+The MCMC for each parameter can be displayed in a so called 'trace plot' where we visualise the sampled parameter values over time.
 
 ```{r}
 ann_text <- tibble(param = c("beta_0", "beta_1"),
@@ -403,34 +404,34 @@ mcmc_l %>%
              fill = "gold")
 ```
 
-Estimation of `beta_0` (intercept)
+Summary statistics of `beta_0` (intercept)
 ```{r}
 quantile(mcmc_l$beta_0[200:5000], probs = c(0.05, 0.5, 0.95))
 ```
 
-Estimation of `beta_1` (slope)
+Summary statistics of `beta_1` (slope)
 ```{r}
 quantile(mcmc_l$beta_1[200:5000], probs = c(0.05, 0.5, 0.95))
 ```
 
 
-The samples in the MCMC are close together. To obtain more independent samples, we could save only every $x^{th}$ value of the MCMC (Thinning). This  saves significant memory space, without sacrificing too much on the quality (independence) of the sample.
+The samples in the MCMC are consecutive. To obtain more independent samples, we could save only every $x^{th}$ value of the MCMC (thinning). This saves memory space, while increasing the quality (independence) of the sample. The final number of iterations however should remain large enough to correctly calculate summary statistics.
 
 There are more sophisticated samplers such as WinBugs, Jags or Stan, but the MCMC principles are always the same.
 
-The 'brms' package uses the stan sampler by default.
+The **brms** package in R (see further) uses the Stan sampler by default.
 
 
-Once we know the posterior, there are several possibilities for point estimates in Bayesian inference (see also figures below):
+Once we know the posterior, there are several possibilities to obtain point estimates in Bayesian inference (see also figures below):
 
 - the posterior mean
 - the posterior median
 - maximum a posteriori (MAP) or the mode. The mode can sometimes be far from the mean and median.
 
-There are also different options for displaying uncertainty:
+There are also different options for quantifying uncertainty:
 
-- Highest posterior density interval (HPDI): this is interesting if, for example, it is important to avoid regions with low density.
-- Equal-tailed credible interval = Central posterior interval (CPI): To calculate a $100*(1-\alpha)$% interval, there will be $\frac{\alpha}{2}$ probability in both the left and right "tail" of the distribution.
+- Highest posterior density interval (HPDI): A $100*(1-\alpha)$% interval countains $100*(1-\alpha)$% of the posterior density. This can be interesting to report when dealing with asymmetric distributions or when is important to avoid regions with low density.
+- Equal-tailed credible interval = Central posterior interval (CPI): To calculate a $100*(1-\alpha)$% interval, there will be $\frac{\alpha}{2}$ probability in both the left and right tails of the distribution.
 
 For symmetric, unimodal distributions, HPDI and CPI are the same (see first figure below).
 Otherwise there may be quite a difference between the two intervals (see figures 2 and 3 below).
@@ -438,9 +439,9 @@ Otherwise there may be quite a difference between the two intervals (see figures
 A good example of bimodal data is the size of stag beetles where males are much larger than females.
 If we would plot the size of all stag beetles, we would obtain something close to the second and third figure below.
 The second figure below shows the HPDI.
-It can be seen that there are little beetles with a size between 34.1mm and 37.5mm: this is slightly too large for a female and to small for a male. 
+It can be seen that there are little beetles with a size between 34.1mm and 37.5mm: this is slightly too large for a female and too small for a male. 
 These sizes of beetles are therefor excluded from the HPDI.
-The equal-tailed credible interval would yields two boundaries; 5% of the beetles are smaller than the lower interval (27.4mm) and 5% are larger than the upper limit of the interval (46.9mm) as can be seen in the third figure below.
+The equal-tailed credible interval would yield two boundaries; 5% of the beetles are smaller than the lower interval (27.4mm) and 5% are larger than the upper limit of the interval (46.9mm) as can be seen in the third figure below.
 However, there are sizes of beetles outside this interval that have a higher posterior then some sizes that are in this interval. For example, while 27.3mm is outside the interval, it has a higher posterior density that 46.8mm which is in the interval.
 
 ```{r, purl = FALSE}
@@ -469,7 +470,7 @@ bimodal <- data.frame(
   mutate(prob = (dnorm(x, mean = 43, sd = 3) +
            dnorm(x, mean = 30, sd = 2))/2,
         cum_sum = (pnorm(x, mean = 43, sd = 3) + pnorm(x, mean = 30, sd = 2))/2)
-measures <- data.frame(measures = c("mean", "mode", "mediaan"),
+measures <- data.frame(measures = c("mean", "mode", "median"),
                        x = c(weighted.mean(x = bimodal$x, w = bimodal$prob),
                              30, 35.2))
 limits <- data.frame(type = c("CPI", "CPI", "HPDI", "HPDI", "HPDI", "HPDI"),
@@ -508,14 +509,14 @@ p3
 ## MCMC software
 
 There exist a number of software programs that apply MCMC for parameter estimates.
-Jags, Nimble and Stan are three examples for which an R interface exists.
+Jags, Nimble and Stan are three examples for which there is an R interface.
 A [recent comparison between these three](https://arxiv.org/pdf/2107.09357v1.pdf) shows that each of these three has strengths and weaknesses but that Stan, overall, is the best performer.
 
-In this course we choose the R package [`brms`](https://cran.r-project.org/web/packages/brms/vignettes/brms_overview.pdf) which provides a convenient, simple interface for Stan.
+In this course we choose the R package [**brms**](https://cran.r-project.org/web/packages/brms/vignettes/brms_overview.pdf) which provides a convenient, simple interface for Stan.
 Some alternatives also exist:
 
-- [RStan](https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html) is the basis of `brms`. You need 'RStan' to use 'brms' because it communicates directly with Stan. However, a model composed in "Pure" Stan code is quite cumbersome.
-- [rstanarm](https://mc-stan.org/rstanarm/articles/index.html) is equally hard (or rather simple) as `brms` in terms of syntax. Moreover, with 'rstanarm' you can use some pre-compiled Stan models. This means that fitting your model takes less time. A large part of the process time of `brms` goes into compiling the Stan program.
+- [**rstan**](https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html) is the basis of **brms**. You need **rstan** to use **brms** because it communicates directly with Stan. A model composed in "pure" Stan code can be fitted with the **rstan** package in R (so without using **brms**), but can be quite complex.
+- [**rstanarm**](https://mc-stan.org/rstanarm/articles/index.html) is similar to **brms** in terms of complexity of the syntax. Moreover, with the **rstanarm** package you can use some pre-compiled Stan models. This means that fitting your model takes less time. A large part of the process time of **brms** goes into compiling the Stan program.
 
 ![Overview of various Stan software (source: https://jtimonen.github.io/posts/post-01/)](software.png)
 
@@ -529,7 +530,7 @@ We load a dataset on the number of ant species in New England (USA). Type `?ants
 # Load data
 data(ants)
 
-# Copy column names in lower-case
+# Set column names to lower case
 ants_df <- ants %>%
   rename(sp_rich = Srich) %>%
   rename_with(tolower)
@@ -538,7 +539,7 @@ ants_df <- ants %>%
 glimpse(ants_df)
 ```
 
-We have a number of sites (`site`) where the number of ant species has been counted (`sp_rich`). Some variables are present: 'habitat', 'latitude' and height ('elevation'). Let's look at some summary statistics. Two counts were made at each site: one in a swamp ('bog') and one in a forest ('forest').
+We have a number of sites (`site`) where the number of ant species has been counted (`sp_rich`). Some variables are present: `habitat`, `latitude` and `elevation`. Let's look at some summary statistics. Two counts were made at each site: one in a bog and one in a forest.
 
 ```{r data-expl-summary}
 # Summary statistics dataset
@@ -549,7 +550,7 @@ We visualise the data.
 
 
 ```{r data-expl-vis1}
-# Frequency number of species in each habitat
+# Frequency of the number of species in each habitat
 ants_df %>%
   ggplot(aes(x = sp_rich)) +
     geom_bar() +
@@ -559,7 +560,7 @@ ants_df %>%
 
 
 ```{r data-expl-vis2}
-# Boxplots number of species per habitat
+# Boxplots of the number of species per habitat
 ants_df %>%
   ggplot(aes(y = sp_rich, x = habitat)) +
     geom_boxplot() +
@@ -569,8 +570,7 @@ ants_df %>%
 ```
 
 ```{r data-expl-vis3}
-# Scatter plot number species and latitude per habitat
-
+# Scatter plot of the number of species, related to the latitude per habitat
 ants_df %>%
   ggplot(aes(y = sp_rich, x = latitude)) +
     geom_point() +
@@ -580,8 +580,7 @@ ants_df %>%
 ```
 
 ```{r data-expl-vis4}
-# Scatter plot number species en height per habitat
-
+# Scatter plot of the number of species, related to the height per habitat
 ants_df %>%
   ggplot(aes(y = sp_rich, x = elevation)) +
     geom_point() +
@@ -591,13 +590,13 @@ ants_df %>%
 ```
 
 As an exercise, we will create a model to compare the number of species between both habitats.
-From the data exploration, we already saw that the number of species seems to be higher in forests and that sites with a higher number in swamps often also have a higher number in forests.
+From the data exploration, we already saw that the number of species seems to be higher in forests and that sites with a higher number in bogs often also have a higher number in forests.
 
 ## Specification of a linear regression
 
 ### Model specification
 
-We want a model that allows us to investigate the difference in number of ant species between swamp and forest habitats. Consider the response variable $Y$, the number of ants, and $X_{habitat}$, a dummy variable equal to 0 for swamps and 1 for forests. We assume that $Y$ follows a Normal distribution (equivalent to a linear regression with categorical variable (= ANOVA)).
+We want a model that allows us to investigate the difference in number of ant species between bog and forest habitats. Consider the response variable $Y$, the number of ants, and $X_{habitat}$, a dummy variable equal to 0 for bogs and 1 for forests. We assume that $Y$ follows a Normal distribution (equivalent to a linear regression with categorical variable (= ANOVA)).
 
 $$
 Y \sim N(\mu, \sigma^2)
@@ -626,12 +625,12 @@ thinning <- 1 # thinning factor (here 1 = no thinning)
 The model is fitted using the `brm()` function. The syntax is very similar to functions used in frequentist statistics such as `lm()` and `glm()`. The `brm()` function contains many arguments (see `?brm`). Useful arguments that we do not use here are, for example:
 
 - `inits` to set the initial values of MCMC algorithm. If these are not specified, the function uses default values.
-- `prior` to provide prior distributions. If these are not specified, the function uses default (non-informative) priors. The argument `sample_prior` can be used to sample from the prior so that you can visualize whether the used prior meets your expectations (also useful for [prior predictive checks](https://arelbundock.com/posts/marginaleffects_priors/)) .
+- `prior` to provide prior distributions. If these are not specified, the function uses default (non-informative) priors. The argument `sample_prior` can be used to sample from the prior so that you can visualise whether the used prior meets your expectations (also useful for [prior predictive checks](https://arelbundock.com/posts/marginaleffects_priors/)) .
 - `file` and `file_refit` to save the model object after it has been fitted. If you run the code again and the model has already been saved, `brm()` will simply load this model instead of refitting it.
 
 
 ```{r simple-model-fit-poisson}
-# Fit Normaal model
+# Fit Normal model
 fit_normal1 <- brm(
   formula = sp_rich ~ habitat, # specify the model
   family = gaussian(),         # we use the Normal distribution
@@ -641,7 +640,7 @@ fit_normal1 <- brm(
   iter = niter,
   cores = nparallel,
   thin = thinning,
-  seed = 123)                  # seed reproducibility
+  seed = 123)                  # seed for reproducibility
 ```
 
 
@@ -651,11 +650,11 @@ Before we look at the results, we first check whether the model converges well.
 
 There are several ways to check convergence of the MCMC algorithm for each parameter. The burn-in samples are not taken into account. First and foremost, you have *visual controls*.
 
-We can obtain the MCMC samples with the `as_draws()` functions or visualize them at once via the [bayesplot](https://mc-stan.org/bayesplot/) package that is compatible with brmsfit objects.
+We can obtain the MCMC samples with the `as_draws()` functions or visualise them at once via the [**bayesplot**](https://mc-stan.org/bayesplot/) package that is compatible with brmsfit objects.
 
 
 ```{r simple-model-colorscheme}
-# Set color palette for clear visualization in bayes plot
+# Set colour palette for clear visualisation in bayesplot
 color_scheme_set("mix-blue-red")
 ```
 
@@ -669,28 +668,28 @@ parameters <- c("b_Intercept", "b_habitatForest", "sigma")
 Trace plots indicate how the sampling of the posterior distribution progresses over time. The idea is that each chain converges to the same distribution for each parameter (this is called mixing). If this plot looks like a fuzzy caterpillar, it means the convergence is good.
 
 ```{r simple-model-trace1}
-# Visualization by extracting samples with as_draws_df()
+# Visualisation by extracting samples with as_draws_df()
 as_draws_df(fit_normal1, variable = parameters) %>%
   # long format
   pivot_longer(cols = all_of(parameters), names_to = "parameter",
                values_to = "value") %>%
-  # visualize with ggplot()
+  # visualise with ggplot()
   ggplot(aes(y = value, x = .iteration, colour = factor(.chain))) +
     geom_line() +
     facet_wrap(~parameter, nrow = 3, scales = "free")
 ```
 
 ```{r simple-model-trace2}
-# Visualise with Bayesplot package
+# Visualise with bayesplot package
 mcmc_trace(fit_normal1, pars = parameters)
 ```
 
 **running mean/quantile/... plot**
 
-In addition to a trace plot, we can also look at how certain statistics such as the average or the quantiles vary over time (= with increasing number of iterations). You naturally want these statistics to stabilize after a number of iterations because then you know that you have used enough iterations.
+In addition to a trace plot, we can also look at how certain statistics, such as the average or the quantiles, vary over time (= with increasing number of iterations). You want these statistics to stabilize after a number of iterations because then you know that you have used enough iterations.
 
 ```{r simple-model-posterior-density}
-# code to calculate cumulative quantiles
+# Code to calculate cumulative quantiles
 # source: https://rdrr.io/cran/cumstats/src/R/cumquant.R
 cumquant <- function(x, p) {
   out <- sapply(seq_along(x),
@@ -704,7 +703,7 @@ cumquant <- function(x, p) {
 # Extract samples and calculate cumulative statistics
 as_draws_df(fit_normal1, variable = parameters) %>%
   mutate(across(all_of(parameters), ~cummean(.x),
-                .names = "{.col}_gemiddelde"),
+                .names = "{.col}_mean"),
          across(all_of(parameters), ~cumquant(.x, 0.05),
                 .names = "{.col}_q05"),
          across(all_of(parameters), ~cumquant(.x, 0.95),
@@ -713,27 +712,27 @@ as_draws_df(fit_normal1, variable = parameters) %>%
   # long format for visualisation
   pivot_longer(cols = starts_with(parameters), names_to = "name",
                values_to = "value") %>%
-  # splits columns names at the last underscore
-  extract(name, into = c("parameter", "statistiek"), "(.*)_([^_]+)$") %>%
+  # split columns names at the last underscore
+  extract(name, into = c("parameter", "statistic"), "(.*)_([^_]+)$") %>%
   ggplot(aes(y = value, x = .iteration, colour = factor(.chain))) +
-    geom_line(aes(linetype = statistiek), linewidth = 0.8) +
+    geom_line(aes(linetype = statistic), linewidth = 0.8) +
     facet_wrap(~parameter, nrow = 3, scales = "free")
 ```
 
 **posterior density plot**
 
-The shape of the posterior distributions can also be informative to check whether the chains have converged to the same distributions. If we see a bimodal distribution (a camel's ridge with two peaks), then there could also be something wrong with the specification of our model.
+The shape of the posterior distributions can also be informative to check whether the chains have converged to the same distributions. If we see a bimodal distribution (a camel's ridge with two peaks) for example, then there could also be something wrong with the specification of our model.
 
 ```{r simple-model-posterior-density2}
-# Visualize density plot of the posterior for each of the chains separately
-# overlay. via Bayesplot package
+# Visualise density plot of the posterior for each of the chains separately
+# via bayesplot package.
 mcmc_dens_overlay(fit_normal1, pars = parameters)
 ```
 
 It is even easier to use the `plot()` function on the brmsfit object. This immediately shows the trace plots and the posterior density plots side by side for each parameter.
 
 ```{r}
-# trace plots and posterior density for each parameter
+# Trace plots and posterior density for each parameter.
 plot(fit_normal1)
 ```
 
@@ -756,15 +755,15 @@ If there is too much autocorrelation, thinning is often used whereby some iterat
 This will reduce the autocorrelation but also the number of posterior samples we have left.
 
 ```{r simple-model-autocorrelation}
-# Visualization of autocorrelation plots via Bayesplot package
+# Visualisation of autocorrelation plots via bayesplot package
 mcmc_acf(fit_normal1, pars = parameters)
 ```
 
 In addition to visual checks, there are also *diagnostic checks*.
 
-**Gelman-Rubin diagnosis**
+**Gelman-Rubin diagnostics**
 
-Also called $\hat{R}$ (R-hat) or potential scale reduction factor. One way to check whether a chain has converged is to compare its behavior with other randomly initialized chains. The $\hat{R}$ statistic takes the ratio of the average variance of samples within each chain to the variance of the pooled samples across all chains. If all chains converge to a common distribution, these ratios will equal 1. If the chains have not converged to a common distribution, the $\hat{R}$ statistic will be greater than 1. We can extract the $\hat{R}$ statistics via the `rhat()` function and then visualize it if necessary with the `mcmc_rhat()` function of the **bayesplot** package.
+Also called $\hat{R}$ (R-hat) or potential scale reduction factor. One way to check whether a chain has converged is to compare its behaviour with other randomly initialized chains. The $\hat{R}$ statistic takes the ratio of the average variance of samples within each chain to the variance of the pooled samples across all chains. If all chains converge to a common distribution, these ratios will equal 1. If the chains have not converged to a common distribution, the $\hat{R}$ statistic will be greater than 1. We can extract the $\hat{R}$ statistics via the `rhat()` function and then visualise them if desired with the `mcmc_rhat()` function of the **bayesplot** package.
 
 ```{r simple-model-get-Rhat}
 # Get R-hats
@@ -773,7 +772,7 @@ print(rhats_fit_normal1)
 ```
 
 ```{r simple-model-plot-Rhat}
-# Plot R-hats via Bayesplot package
+# Plot R-hats via bayesplot package
 mcmc_rhat(rhats_fit_normal1) + yaxis_text(hjust = 1)
 ```
 
@@ -788,11 +787,11 @@ print(ratios_fit_normal1)
 ```
 
 ```{r simple-model-plot- effective-sample-size}
-# Plot ratio via Bayesplot package
+# Plot ratio via bayesplot package
 mcmc_neff(ratios_fit_normal1) + yaxis_text(hjust = 1)
 ```
 
-Other packages that may be useful in checking MCMC convergence are [mcmcplots](https://cran.r-project.org/web/packages/mcmcplots/index.html) and [coda](https://cran .r-project.org/web/packages/coda/index.html). For these packages you must first convert the MCMC samples from your **brms** model to an mcmc object.
+Other packages that may be useful for checking MCMC convergence are [mcmcplots](https://cran.r-project.org/web/packages/mcmcplots/index.html) and [coda](https://cran .r-project.org/web/packages/coda/index.html). For these packages you must first convert the MCMC samples from your **brms** model to an mcmc object.
 
 ```         
 # example
@@ -800,29 +799,29 @@ install.packages("mcmcplots")
 mcmcplots::mcmcplot(as.mcmc(fit_normal1, pars = parameters))
 ```
 
-In general, we can conclude that MCMC convergence is good for all parameters. If this were not the case, the MCMC parameters may have to be chosen differently, for example by increasing the number of iterations. Now that we know that the parameters have been estimated correctly, we can check whether the model fits the data well.
+In general, we can conclude that MCMC convergence is good for all parameters in our Normal model. If this were not the case, the MCMC parameters may have to be chosen differently, for example by increasing the number of iterations. Now that we know that the parameters have been estimated correctly, we can check whether the model fits the data well.
 
 ### Model fit
 
-The [posterior predictive check](https://mc-stan.org/bayesplot/articles/graphical-ppcs.html) (PPC) is a good way to check whether the model fits the data well. The idea behind the PPC is that, if a model fits well, the predicted values based on the model are very similar to the data we used to fit the model. To generate the predictions used for PPCs, we simulate several times from the posterior predictive distribution (the posterior distribution of the response variable). Visualization is possible with the **bayesplot** package. The thick line shows the data and the thin lines show different simulations based on the model.
+The [posterior predictive check](https://mc-stan.org/bayesplot/articles/graphical-ppcs.html) (PPC) is a good way to check whether the model fits the data well. The idea behind the PPC is that, if a model fits well, the predicted values based on the model are very similar to the data we used to fit the model. To generate the predictions used for PPCs, we simulate several times from the posterior predictive distribution (the posterior distribution of the response variable). visualisation is possible with the **bayesplot** package. The thick line shows the data and the thin lines show different simulations based on the model.
 
 ```{r simple-model-fit1}
-# Visualise model fit via Bayesplot package
+# Visualise model fit via bayesplot package
 pp_check(fit_normal1, type = "dens_overlay_grouped", ndraws = 100, 
          group = "habitat")
 ```
 
-We see that the observed data and the predictions based on our model do not quite match. Our choice for the Normal distribution may have been wrong. Numbers are discrete, positive values, while the Normal distribution can predict continuous and both positive and negative values. The Poisson distribution is a discrete distribution that is always positive. It is often used to model recorded numbers over a given time interval, distance, area, volume...
+We see that the observed data and the predictions based on our model do not quite match. Our choice for the Normal distribution may have been wrong. Numbers are discrete, positive values, while the Normal distribution can predict continuous and both positive and negative values. The Poisson distribution is a discrete distribution that is always positive. It is often used to model numbers recorded over a given time interval, distance, area, volume...
 
 **Remark:**
 
-Note that MCMC convergence and model fit are two different things. Just because MCMC convergence is good does not mean that model fit is also good. MCMC convergence is to check whether the MCMC algorithm has been able to correctly approximate the distributions of the parameters. Model fit checks whether the model we have adopted (normality assumption, linear relationship average...) fits the data well.
+Note that MCMC convergence and model fit are two different things. If MCMC convergence is good, this does not necessarily mean that model fit is also good. MCMC convergence is to check whether the MCMC algorithm has been able to correctly approximate the distributions of the parameters. Model fit checks whether the model we have adopted (normality assumption, linear relationship average...) fits the data well.
 
 ## Specification of a Poisson model
 
 ### Model specification
 
-We assume that $Y$ now follows a Poisson distribution
+We now assume that $Y$ now follows a Poisson distribution
 
 $$
 Y \sim Pois(\lambda)
@@ -847,12 +846,12 @@ fit_poisson1 <- brm(
   iter = niter,
   cores = nparallel,
   thin = thinning,
-  seed = 123)                  # seed voor reproducability
+  seed = 123)                  # seed for reproducibility
 ```
 
 ### MCMC convergence
 
-Convergence again looks good.
+Convergence looks good.
 
 ```{r poisson-model-convergence}
 # Visualise MCMC convergence of the Poisson model
@@ -870,7 +869,7 @@ mcmc_rhat(rhats_fit_poisson1) + yaxis_text(hjust = 1)
 We see that all predictions are now positive, but the fit is still not perfect.
 
 ```{r poisson-model-fit-vis}
-# Visualiseer model fit via Bayesplot package
+# Visualise model fit via bayesplot package
 pp_check(fit_poisson1, type = "dens_overlay_grouped", ndraws = 100, 
          group = "habitat")
 ```
@@ -879,7 +878,7 @@ pp_check(fit_poisson1, type = "dens_overlay_grouped", ndraws = 100,
 
 How can we further improve model fit?
 
-We know that each site has been visited twice. Once in swamp and once in forest. It is of course possible that the number of ants in the swamp and forest of the same site will be correlated (site effect). We indeed also saw this in the data exploration. Sites with higher numbers of species in swamps often also have higher numbers in forests and vice versa. We can correct this by adding a random intercept for each site `... + (1|site)`.
+We know that each site has been visited twice. Once in bog and once in forest. It is of course possible that the number of ants in the bog and forest of the same site will be correlated (site effect). Indeed, this is something we noticed during data exploration as well. Sites with higher numbers of species in bogs often also have higher numbers in forests and vice versa. We can correct this by adding a random intercept for each site `... + (1|site)`.
 
 We assume that the number of species $Y$ per site $j$ ($j = 1, ..., J$) follows a Poisson distribution
 
@@ -909,12 +908,12 @@ fit_poisson2 <- brm(
   iter = niter,
   cores = nparallel,
   thin = thinning,
-  seed = 123)
+  seed = 123)#seed for reproducibility
 ```
 
-Convergentie is goed.
+Convergence looks good.
 
-```{r rand-intercept-model-convergentie}
+```{r rand-intercept-model-convergence}
 # Visualise MCMC convergence
 plot(fit_poisson2)
 ```
@@ -926,11 +925,11 @@ rhats_fit_poisson2 <- rhat(fit_poisson2)[parameters2]
 mcmc_rhat(rhats_fit_poisson2) + yaxis_text(hjust = 1)
 ```
 
-Model fit lijkt nu nog beter.
+Model fit looks  even better than before.
 
 ```{r rand-intercept-model-fit-vis}
 # Visualise model fit of the Poisson model with random intercept via
-# Bayesplot package
+# bayesplot package
 pp_check(fit_poisson2, type = "dens_overlay_grouped", ndraws = 100, 
          group = "habitat")
 ```
@@ -939,16 +938,16 @@ How can we objectively compare these models?
 
 # Compare models
 
-Based on the PPCs we can already see which model fits the data fits. Furthermore, there are some functions that **brms** provides to compare different models. With the function `add_criterion()` you can add model fit criteria to model objects. Type `?add_criterion()` to see which ones are available. See also <https://mc-stan.org/loo/articles/online-only/faq.html>
+Based on the PPCs we can already see which model fits the data best. Furthermore, there are some functions that **brms** provides to compare different models. With the function `add_criterion()` you can add model fit criteria to model objects. Type `?add_criterion()` to see which ones are available. See also <https://mc-stan.org/loo/articles/online-only/faq.html>
 
 ## Leave-one-out cross validation
 
-Cross-validation (CV) is a family of techniques that attempts to estimate how well a model would predict unknown data through predictions of the model fitted to the known data. You do not necessarily have to collect new data for this. You can split your own data into a test and training dataset. You fit the model to the training dataset and then use that model to estimate how well it can predict the data in the test dataset. With leave-one-out CV (LOOCV) you leave out one observation each time and refit the model based on all other observations.
+Cross-validation (CV) is a family of techniques that attempts to estimate how well a model would predict unknown data through predictions of the model fitted to the known data. You do not necessarily have to collect new data for this. You can split your own data into a test and training dataset. You fit the model to the training dataset and then use that model to estimate how well it can predict the data in the test dataset. With leave-one-out CV (LOOCV) you leave out one observation each time as test dataset and refit the model based on all other observations (= training dataset).
 
 ![Figure LOOCV.](loocv.png)
 
 ```{r compare-loocv}
-# Add leave-one-out model fit criterium toe to model objects
+# Add leave-one-out model fit criterium to model objects
 fit_normal1 <- add_criterion(fit_normal1,
                              criterion = c("loo"))
 fit_poisson1 <- add_criterion(fit_poisson1,
@@ -957,7 +956,7 @@ fit_poisson2 <- add_criterion(fit_poisson2,
                               criterion = c("loo"))
 ```
 
-To determine the difference between the model's prediction based on the training dataset with the omitted data, we must define a so-called utility or loss function. We use the 'expected log pointwise predictive density' (ELPD) here. For this workshop, it is especially important to understand that this is a measure of how well your Bayesian model predicts new data points. It is calculated by taking the log-likelihood of each data point from the posterior predictive distribution of your model and then averaging it. A higher ELPD indicates better model fit and predictive accuracy. For this workshop, it is especially important to understand that this is a measure of how well the model can predict unknown data (`elpd_loo` and the standard error `se_elpd_loo`). `p_loo` is a measure of the complexity of the model. $\text{looic} = -2*\text{elpd_loo}$ With the function `loo_compare()` you can compare multiple models and the difference in ELPD is also calculated.
+To determine the difference between the model's prediction based on the training dataset with the omitted data, we must define a so-called utility or loss function. We use the 'expected log pointwise predictive density' (ELPD) here. For this tutorial, it is mainly important to understand that this is a measure of how well your Bayesian model predicts new data points. It is calculated by taking the log-likelihood of each data point from the posterior predictive distribution of your model and then averaging it. A higher ELPD indicates better model fit and predictive accuracy. For this tutorial, it is mainly important to understand that this is a measure of how well the model can predict unknown data (`elpd_loo` and the standard error `se_elpd_loo`). `p_loo` is a measure of the complexity of the model. $\text{looic} = -2*\text{elpd_loo}$ With the function `loo_compare()` you can compare multiple models and the difference in ELPD is also calculated.
 
 ```{r compare-loocv-compare}
 # Make comparison leave-one-out cross-validation and print
@@ -1012,7 +1011,7 @@ comp_kfold <- loo_compare(fit_normal1, fit_poisson1, fit_poisson2,
 print(comp_kfold, simplify = FALSE, digits = 3)
 ```
 
-The results are the same, but the differences are slightly smaller than before. The difference between the two Poisson models is no longer significant.
+The results are the same, but the differences are slightly smaller than before.
 
 ```{r compare-K-fold-ci}
 # Calculate confidence interval to compare models with K-fold CV
@@ -1025,7 +1024,7 @@ comp_kfold %>%
 
 ## WAIC
 
-The Widely Applicable Information Criterion (WAIC) does not use cross-validation but is a computational way to estimate the ELPD. How this happens exactly is beyond the purpose of this workshop. It is yet another measure to apply model selection.
+The Widely Applicable Information Criterion (WAIC) does not use cross-validation but is a computational way to estimate the ELPD. How this happens exactly is beyond the purpose of this tutorial. It is yet another measure to apply model selection.
 
 ```{r compare-WAIC}
 # Add WAIC model fit criterion to model objects
@@ -1040,7 +1039,7 @@ fit_poisson2 <- add_criterion(fit_poisson2,
 We get similar results as before.
 
 ```{r comparen-WAIC-compare}
-# Get waic en print
+# Get waic and print
 comp_waic <- loo_compare(fit_normal1, fit_poisson1, fit_poisson2,
                          criterion = "waic")
 print(comp_waic, simplify = FALSE, digits = 3)
@@ -1061,16 +1060,16 @@ Both based on the PPC and the comparisons with different model selection criteri
 
 # Final model results
 
-When we look at the model fit object, we see results that are similar to results we see when we fit a frequentist model. On the one hand we get an estimate of all parameters with their uncertainty, but on the other hand we see that this is clearly the output of a Bayesian model. We get information about the parameters we used for the MCMC algorithm, we get a 95% credible interval (CI) instead of a confidence interval and we also get the $\hat{R}$ value that we use for each parameter. discussed earlier.
+When we look at the model fit object, we see results that are similar to results we see when we fit a frequentist model. On the one hand we get an estimate of all parameters with their uncertainty, but on the other hand we see that this is clearly the output of a Bayesian model. We get information about the parameters we used for the MCMC algorithm, we get a 95% credible interval (CI) instead of a confidence interval and we also get the $\hat{R}$ value for each parameter as discussed earlier.
 
 ```{r results-fit-poisson}
 # Look at the fit object of the Poisson model with random effects
 fit_poisson2
 ```
 
-A useful package for visualizing the results of our final model is the [tidybayes](https://mjskay.github.io/tidybayes/articles/tidy-brms.html) package. Through this package, you can work with the posterior distributions as you would work with any dataset through the **tidyverse** package.
+A useful package for visualising the results of our final model is the [tidybayes](https://mjskay.github.io/tidybayes/articles/tidy-brms.html) package. Through this package, you can work with the posterior distributions as you would work with any dataset through the **tidyverse** package.
 
-With the function `gather_draws()` you can take a certain number of samples of the posterior distributions of certain parameters and convert them into a long format table. You usually do not want to select all posterior samples because there are often unnecessarily many. By specifying a 'seed' you ensure that these are the same samples every time you run the script again. You can then calculate certain summary statistics via the classic **dplyr** functions.
+With the function `gather_draws()` you can take a certain number of samples from the posterior distributions of certain parameters and convert them into a long format table. You usually do not want to select all posterior samples because there are sometimes unnecessarily many. By specifying a 'seed' you ensure that these are the same samples every time you run the script again. You can then calculate certain summary statistics via the classic **dplyr** functions.
 
 ```{r results-fit-poisson-2}
 fit_poisson2 %>%
@@ -1081,8 +1080,8 @@ fit_poisson2 %>%
   summarise(min = min(.value),
             q_05 = quantile(.value, probs = 0.05),
             q_20 = quantile(.value, probs = 0.20),
-            gemiddelde = mean(.value),
-            mediaan = median(.value),
+            mean = mean(.value),
+            median = median(.value),
             q_80 = quantile(.value, probs = 0.80),
             q_95 = quantile(.value, probs = 0.95),
             max = max(.value))
@@ -1090,13 +1089,13 @@ fit_poisson2 %>%
 
 Useful functions of the **tidybayes** package are also `median_qi()`, `mean_qi()` ... after `gather_draws()` which you can use instead of `group_by()` and `summarise()` .
 
-We would now like to visualize the estimated number of species per habitat type with associated uncertainty. With the function `spread_draws()` you can take a certain number of samples from the posterior distribution and convert them into a wide format table. The average number of species in swamps according to our model is $\exp(\beta_0)$ and in forests $\exp(\beta_0+\beta_1)$. We show the posterior distributions with the posterior median and 60 and 90% credible intervals.
+We would now like to visualise the estimated number of species per habitat type with associated uncertainty. With the function `spread_draws()` you can take a certain number of samples from the posterior distribution and convert them into a wide format table. The average number of species in bogs according to our model is $\exp(\beta_0)$ and in forests $\exp(\beta_0+\beta_1)$. We show the posterior distributions with the posterior median and 60 and 90% credible intervals.
 
 ```{r resultats-fit-poisson-3}
 fit_poisson2 %>%
-  # vgather 1000 posterior samples for 2 parameters in wide format
+  # spread 1000 posterior samples for 2 parameters in wide format
   spread_draws(b_Intercept, b_habitatForest, ndraws = 1000, seed = 123) %>%
-  # calculate average numbers and convert to long format for visualization
+  # calculate average numbers and convert to long format for visualisation
   mutate(bog = exp(b_Intercept),
          forest = exp(b_Intercept + b_habitatForest)) %>%
   pivot_longer(cols = c("bog", "forest"), names_to = "habitat", 
@@ -1107,9 +1106,9 @@ fit_poisson2 %>%
     scale_y_continuous(limits = c(0, NA))
 ```
 
-In addition to `stat_eye()` you will find [here](https://mjskay.github.io/tidybayes/articles/tidy-brms.html#other-visualizations-of-distributions-stat_slabinterval) some nice ways to visualize posterior distributions .
+In addition to `stat_eye()` you will find [here](https://mjskay.github.io/tidybayes/articles/tidy-brms.html#other-visualizations-of-distributions-stat_slabinterval) some nice ways to visualise posterior distributions .
 
-We see a clear difference in the number of species between the two habitats. Is there a significant difference between the number of species in swamps and forests? We test the hypothesis that numbers are equal in swamps and forests.
+We see a clear difference in the number of species between the two habitats. Is there a significant difference between the number of species in bogs and forests? We test the hypothesis that numbers are equal in bogs and forests.
 
 $$
 \exp(\beta_0) = \exp(\beta_0+\beta_1)\\
@@ -1131,6 +1130,8 @@ hyp
 # Plot posterior distribution hypothesis
 plot(hyp)
 ```
+
+We can conclude that there is a significant difference since 0 is not included in the 90% credible interval.
 
 Finally, we visualise the random effects of the sites. We sort them from high to low species richness.
 
@@ -1161,11 +1162,11 @@ fit_poisson2 %>%
 Let's go back to our very first model where we used the Normal distribution. This was equivalent to a linear regression with categorical variable. A linear regression with categorical variable is also called ANOVA and if there are only two groups, an ANOVA is equivalent to a t-test. We can therefore take the opportunity to compare the results of our first model (a Bayesian model) with the results of a classical (frequentist) t-test.
 
 ```{r compare-frequentist}
-# Extract summary statisticsof the  Bayesiaans model
+# Extract summary statistics from the  Bayesian model
 sum_fit_normal1 <- summary(fit_normal1, prob = 0.9)
-verschil_moeras1 <- sum_fit_normal1$fixed$Estimate[2]
-ll_verschil_moeras1 <- sum_fit_normal1$fixed$`l-90% CI`[2]
-ul_verschil_moeras1 <- sum_fit_normal1$fixed$`u-90% CI`[2]
+diff_bog1 <- sum_fit_normal1$fixed$Estimate[2]
+ll_diff_bog1 <- sum_fit_normal1$fixed$`l-90% CI`[2]
+ul_diff_bog1 <- sum_fit_normal1$fixed$`u-90% CI`[2]
 
 sum_fit_normal1
 ```
@@ -1173,22 +1174,22 @@ sum_fit_normal1
 ```{r compare-frequentist-t-test}
 # Perform t-test and extract summary statistics
 t_test_normal1 <- t.test(sp_rich ~ habitat, data = ants_df, conf.level = 0.9)
-verschil_moeras2 <- t_test_normal1$estimate[2] - t_test_normal1$estimate[1]
-ll_verschil_moeras2 <- -t_test_normal1$conf.int[2]
-ul_verschil_moeras2 <- -t_test_normal1$conf.int[1]
+diff_bog2 <- t_test_normal1$estimate[2] - t_test_normal1$estimate[1]
+ll_diff_bog2 <- -t_test_normal1$conf.int[2]
+ul_diff_bog2 <- -t_test_normal1$conf.int[1]
 
 t_test_normal1
 ```
 
-We see that this indeed produces almost exactly the same results. Our Bayesian model estimates that on average `r round(verschil_moeras1, 3)` more ant species occur in forests than in swamps (90% credible interval:  `r round(ll_verschil_moeras1, 3)` to `r round(ul_verschil_moeras1, 3)`). The t-test estimates that on average `r round(verschil_moeras2, 3)` more ant species occur in forests than in swamps (90% confidence interval: `r round(ll_verschil_moeras2, 3)` to `r round(ul_verschil_moeras2, 3)`).
+We see that this indeed produces almost exactly the same results. Our Bayesian model estimates that on average `r round(diff_bog1, 3)` more ant species occur in forests than in bogs (90% credible interval:  `r round(ll_diff_bog1, 3)` to `r round(ul_diff_bog1, 3)`). The t-test estimates that on average `r round(diff_bog2, 3)` more ant species occur in forests than in bogs (90% confidence interval: `r round(ll_diff_bog2, 3)` to `r round(ul_diff_bog2, 3)`).
 
 
 # References {-}
 
 - Stan User Guide [(link)](https://mc-stan.org/docs/2_18/stan-users-guide/index.html).
-- Brms documentation [(link)](https://mc-stan.org/users/interfaces/brms).
+- **brms** documentation [(link)](https://mc-stan.org/users/interfaces/brms).
 - Ben Lambert has a  [youtube channel](https://www.youtube.com/channel/UC3tFZR3eL1bDY8CqZDOQh-w) with a student's guide to Bayesian statistics, a [short course](https://ben-lambert.com/biology/) and [detailed slides](https://ben-lambert.com/bayesian-lecture-slides/) on Bayesian statistics.
-- rstanarm vignettes [(link)](https://mc-stan.org/rstanarm/articles/)
+- **rstanarm** vignettes [(link)](https://mc-stan.org/rstanarm/articles/)
 - some more useful packages that can work with brms objects
   - **posterior** useful tools for fitting Bayesian models or working with Bayesian model output  [(link)](https://mc-stan.org/posterior/)
   - **projpred** selection of the most important explanatory variables in your model via projection prediction [(link)](https://mc-stan.org/projpred/)
