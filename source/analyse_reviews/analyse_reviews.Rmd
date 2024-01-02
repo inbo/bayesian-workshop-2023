@@ -68,7 +68,7 @@ header <-
 In oktober 2023 werd er een infomoment georganiseerd over Bayesiaanse statistiek om INBO medewerkers op een laagdrempelige manier uit te leggen wat het is en hoe het verschilt van frequentist statistiek.
 Tegelijkertijd was het ook de bedoeling om ze warm te maken om een statistische opleiding rond Bayesiaanse statistiek te volgen.
 
-Door de grote interesse werd de opleiding Bayesiaanse statistiek drie keer gegeven in het HT gebouw; 13, 14 en 30 november.
+Door de grote interesse werd de opleiding Bayesiaanse statistiek drie keer gegeven in het HT gebouw: 13, 14 en 30 november.
 In totaal volgden er respectievelijk 8, 18 en 22 mensen de lessen (48 mensen in totaal).
 Iedereen werd gevraagd om de cursus te beoordelen door middel van een google form.
 `r nrow(data)` medewerkers vulden de bevraging in.
