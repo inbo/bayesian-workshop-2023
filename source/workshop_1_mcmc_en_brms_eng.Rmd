@@ -52,7 +52,7 @@ We would also like to refer to the presentation of October 24, 2023  ([infomomen
 ```{r, purl = FALSE}
 data.frame(
   what = c(
-   "interpretation probability",
+   "interpretation of probability",
    "used knowledge",
    "hypothesis tests",
    "terminology",
