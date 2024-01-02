@@ -90,7 +90,7 @@ Why should you want to use Bayesian models?
 
 ### Statistical inference
 
-Statistical inference is trying to learn something about a (population) parameter based on data.
+Statistical inference is concerned with trying to learn something about a (population) parameter based on data.
 Suppose we are interested in the number of ant species found in a research site of a pre-specified size.
 Numbers are often specified by a Poisson distribution since this distribution only has a probability mass at positive integers.
 
