@@ -83,7 +83,7 @@ Why should you want to use Bayesian models?
 - All frequentist models can also be approximated by a Bayesian model, but not all Bayesian models can be modelled in a frequentist way.
 - Fit more complex models with temporal and spatial components or with differential equations (Ordinary Differential Equations, ODE).
 - Interpretation is sometimes easier / more intuitive.
-- You obtain a complete probability distribution for each parameter, making it easy for further calculations or simulations.
+- You obtain a complete probability distribution for each parameter, making it easy for subsequent calculations or simulations.
 - You can combine different sources of data in an integrated model.
 - Include additional data / conclusions / expectations in your model using a prior.
 
