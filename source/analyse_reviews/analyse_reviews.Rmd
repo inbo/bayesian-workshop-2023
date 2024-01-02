@@ -139,7 +139,7 @@ We maakten gebruik van de gelegenheid om de cursisten ook te bevragen over hun i
 
 In totaal waren `r sum(data$geavanceerde_cursus_ja_nee == "Ja")` (`r round(100*sum(data$geavanceerde_cursus_ja_nee == "Ja")/nrow(data))`%) personen geïnteresseerd in een vervolgcursus, waren `r sum(data$geavanceerde_cursus_ja_nee == "Misschien")` (`r round(100*sum(data$geavanceerde_cursus_ja_nee == "Misschien")/nrow(data))`%) misschien geïnteresseerd en waren `r sum(data$geavanceerde_cursus_ja_nee == "Nee")` (`r round(100*sum(data$geavanceerde_cursus_ja_nee == "Nee")/nrow(data))`%) niet geïnteresseerd.
 
-Alle cursisten die (misschien) geïnteresseerd zijn in een vervolgcursus, werd gevraagd in welke thema's ze interesse hadden. Ze mochten meerdere thema's aanduiden.
+Alle cursisten die (misschien) geïnteresseerd zijn in een vervolgcursus, werden gevraagd in welke thema's ze interesse hadden. Ze mochten meerdere thema's aanduiden.
 Figuur \@ref(fig:vervolg) toont dat mixed models, populatiemodellering en GAM's het meest populair zijn.
 
 ```{r vervolg, fig.cap = "Interesse in geavanceerdere cursus in de toekomst."}
