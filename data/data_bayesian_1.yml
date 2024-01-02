@@ -1,0 +1,49 @@
+..generic:
+  git2rdata: 0.4.0
+  optimize: yes
+  NA string: NA
+  sorting: Timestamp
+  hash: 31188c77771bfa647d648ea6de78c504e3c25344
+  data_hash: 4848cf4b0f1a364c79b2dbd1ea7191a51146138e
+Timestamp:
+  class: POSIXct
+  origin: 1970-01-01 00:00:00
+  timezone: UTC
+ervaren_statistiek:
+  class: character
+ervaren_bayesiaanse_statistiek:
+  class: character
+ervaren_r:
+  class: character
+ervaren_andere_software:
+  class: character
+infomoment:
+  class: character
+eval_structuur:
+  class: character
+eval_begrijpen:
+  class: character
+eval_afgestemd:
+  class: character
+eval_aanpak:
+  class: character
+eval_vragen:
+  class: character
+eval_tempo:
+  class: character
+eval_tevreden:
+  class: character
+eval_verwacht:
+  class: character
+eval_toepasbaar:
+  class: character
+ontbrekende_themas:
+  class: character
+geavanceerde_cursus_ja_nee:
+  class: character
+geavanceerde_cursus_thema:
+  class: character
+opmerkingen:
+  class: character
+opmerkingen_einde:
+  class: character

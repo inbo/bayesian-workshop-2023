@@ -1,0 +1,248 @@
+---
+title: "Analyse van de tevredenheidsenquête over de les Bayesiaanse Statistiek"
+author: "Raïsa Carmen"
+date: "`r Sys.Date()`"
+output:
+  bookdown::html_document2: default
+  bookdown::pdf_document2: default
+params:
+  source: "local"
+---
+
+```{r setup, include=FALSE, message = FALSE, warning=FALSE}
+#choose source: "google" to download the data from google drive
+#choose source: "local" to continue with the loaclly saved file
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(googlesheets4)
+library(rprojroot)
+library(git2rdata)
+library(ggstats)
+library(kableExtra)
+```
+
+```{r read-google, eval = (params$source == "google"), message = FALSE, warning=FALSE}
+data <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1gLOOjaMKXBkB4ps8ac6RBTQAnZiR7w1dJBobK9JwexM/edit#gid=1267380515") %>% #nolint
+  dplyr::select(-`Naam en voornaam (optioneel)`)
+header <- data.frame(
+  full = colnames(data),
+  short =  c("Timestamp", "ervaren_statistiek",
+                    "ervaren_bayesiaanse_statistiek", "ervaren_r",
+                    "ervaren_andere_software", "infomoment", "eval_structuur",
+                    "eval_begrijpen", "eval_afgestemd", "eval_aanpak",
+                    "eval_vragen", "eval_tempo", "eval_tevreden",
+                    "eval_verwacht", "eval_toepasbaar", "ontbrekende_themas",
+                    "geavanceerde_cursus_ja_nee", "geavanceerde_cursus_thema", 
+                    "opmerkingen", "opmerkingen_einde"))
+colnames(data) <- header$short
+#save the raw data
+write_vc(x = data,
+         "data_bayesian_1",
+         root =
+           find_root_file("data",
+                          criterion = has_file("bayesian-workshop-2023.Rproj")),
+         sorting = "Timestamp")
+write_vc(x = header,
+         "data_bayesian_1_header",
+         root =
+           find_root_file("data",
+                          criterion = has_file("bayesian-workshop-2023.Rproj")),
+         sorting = "short")
+```
+
+
+```{r read-local, eval = (params$source == "local"), message = FALSE, warning=FALSE}
+data <-
+  read_vc("data_bayesian_1",
+          root = find_root_file(
+            "data",
+            criterion = has_file("bayesian-workshop-2023.Rproj"))) #nolint
+header <-
+  read_vc("data_bayesian_1_header",
+          root = find_root_file(
+            "data",
+            criterion = has_file("bayesian-workshop-2023.Rproj"))) #nolint
+```
+# Inleiding
+
+In oktober 2023 werd er een infomoment georganiseerd over Bayesiaanse statistiek om INBO medewerkers op een laagdrempelige manier uit te leggen wat het is en hoe het verschilt van frequentist statistiek.
+Tegelijkertijd was het ook de bedoeling om ze warm te maken om een statistische opleiding rond Bayesiaanse statistiek te volgen.
+
+Door de grote interesse werd de opleiding Bayesiaanse statistiek drie keer gegeven in het HT gebouw: 13, 14 en 30 november.
+In totaal volgden er respectievelijk 8, 18 en 22 mensen de lessen (48 mensen in totaal).
+Iedereen werd gevraagd om de cursus te beoordelen door middel van een google form.
+`r nrow(data)` medewerkers vulden de bevraging in.
+Dit rapport beschrijft het resultaat van deze beoordelingen.
+
+# Resultaten
+
+## Deelnemers
+
+Figuur \@ref(fig:ervaring) toont dat de meeste deelnemers ervaren zijn met statistiek en R(Studio).
+De kennis van Bayesiaanse statistiek is echter beperkt, alsook de kennis van andere statistische softwarepakketten.
+
+```{r ervaring, fig.cap = "Ervaring van de deelnemers."}
+lbl <- header %>%
+  filter(str_detect(short, "ervaren_")) %>%
+  dplyr::pull(full)
+names(lbl) <- header %>%
+  filter(str_detect(short, "ervaren_")) %>%
+  dplyr::pull(short)
+
+data %>%
+  dplyr::select(starts_with("ervaren")) %>%
+  mutate_all(function(x) {as.factor(x) %>%
+               factor(levels = c("Helemaal niet ervaren", "Niet ervaren",
+                                 "Gemiddeld", "Ervaren", "Heel ervaren"),
+                      ordered = TRUE)}) %>%
+  gglikert(variable_labels = lbl,
+           y_label_wrap = 25)
+```
+
+`r round(100*sum(data$infomoment =="Ja")/nrow(data))` procent van de deelnemers gaf bovendien aan dat ze het infomoment over Bayesiaanse statistiek in oktober gevolgd hadden. 
+
+
+## Evaluatie les Bayesiaanse statistiek
+
+De deelnemers werden bevraagd over:
+
+- De inhoud van de les (eerste 3 vragen in Figuur \@ref(fig:eval-likert)).
+- Hoe de les gegeven wordt (vraag 4 tot en met 6 in Figuur \@ref(fig:eval-likert)).
+- De relevantie van de les (vraag 7 tot en met 9 in Figuur \@ref(fig:eval-likert)).
+
+```{r eval-likert, fig.cap = "Evaluatie van de les."}
+lbl <- header %>%
+  filter(str_detect(short, "eval_")) %>%
+  mutate(full =
+           str_remove(full,
+                      "Hoe evalueer je de les Bayesiaanse statistiek\\? \\["),
+         full = str_remove(full, "\\]")) %>%
+  dplyr::pull(full)
+names(lbl) <- header %>%
+  filter(str_detect(short, "eval_")) %>%
+  dplyr::pull(short)
+
+data %>%
+  dplyr::select(starts_with("eval")) %>%
+  mutate_all(function(x) {as.factor(x) %>%
+               factor(levels = c("Helemaal niet akkoord", "Niet akkoord",
+                                 "Neutraal", "Akkoord", "Helemaal akkoord"),
+                      ordered = TRUE)}) %>%
+  gglikert(variable_labels = lbl,
+           y_label_wrap = 25)
+```
+
+
+## Toekomstige cursussen
+
+We maakten gebruik van de gelegenheid om de cursisten ook te bevragen over hun interesse in vervolgcursussen Bayesiaanse statistiek.
+
+In totaal waren `r sum(data$geavanceerde_cursus_ja_nee == "Ja")` (`r round(100*sum(data$geavanceerde_cursus_ja_nee == "Ja")/nrow(data))`%) personen geïnteresseerd in een vervolgcursus, waren `r sum(data$geavanceerde_cursus_ja_nee == "Misschien")` (`r round(100*sum(data$geavanceerde_cursus_ja_nee == "Misschien")/nrow(data))`%) misschien geïnteresseerd en waren `r sum(data$geavanceerde_cursus_ja_nee == "Nee")` (`r round(100*sum(data$geavanceerde_cursus_ja_nee == "Nee")/nrow(data))`%) niet geïnteresseerd.
+
+Alle cursisten die (misschien) geïnteresseerd zijn in een vervolgcursus, werden gevraagd in welke thema's ze interesse hadden. Ze mochten meerdere thema's aanduiden.
+Figuur \@ref(fig:vervolg) toont dat mixed models, populatiemodellering en GAM's het meest populair zijn.
+
+```{r vervolg, fig.cap = "Interesse in geavanceerdere cursus in de toekomst."}
+answers <- str_split(as.character(
+  paste(data$geavanceerde_cursus_thema, collapse = ",")),
+  pattern = ",")
+answers <- sapply(answers, function(x) str_trim(x))
+answers <- answers[!(answers %in% c("NA", ""))]
+vervolg <- data.frame(vervolgcursus = answers) %>%
+  group_by(vervolgcursus) %>%
+  summarize(n = n())
+
+ggplot(vervolg) +
+  geom_bar(aes(x = reorder(vervolgcursus, n), y = n),
+               stat = "identity") +
+  coord_flip() +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 25)) +
+  ylab("Aantal cursusten die geïnteresseerd zijn") +
+  xlab("")
+```
+
+## Opmerkingen in tekstvelden
+
+Doorheen de bevragen kregen de cursisten verschillende keren de kans om opmerkingen toe te voegen in tekstvelden.
+Over het algemeen bevatten deze tekst velden positieve feedback.
+Onderstaande tabellen tonen alle feedback.
+
+```{r }
+data %>%
+  dplyr::select(ontbrekende_themas) %>%
+  filter(!is.na(ontbrekende_themas)) %>%
+  kable(booktabs = TRUE,
+        caption = "Antwoord op de vraag of er ontbrekende thema's waren in de les.") %>%
+  kableExtra::kable_styling() %>%
+  kableExtra::column_spec(1, width = 6)
+```
+
+```{r }
+data %>%
+  dplyr::select(opmerkingen) %>%
+  filter(!is.na(opmerkingen)) %>%
+  kable(booktabs = TRUE,
+        caption = "Opmerkingen bij de keuze van een onderwerp voor een vervolgcursus.") %>%
+  kableExtra::kable_styling() %>%
+  kableExtra::column_spec(1, width = 6)
+```
+
+```{r }
+data %>%
+  dplyr::select(opmerkingen_einde) %>%
+  filter(!is.na(opmerkingen_einde)) %>%
+  kable(booktabs = TRUE,
+        caption = "Opmerkingen op het einde van de bevraging.") %>%
+  kableExtra::kable_styling() %>%
+  kableExtra::column_spec(1, width = 6)
+```
+
+# Berekening KPI
+
+Als we aan ieder van de evaluatie categorieën (Figuur \@ref(fig:eval-likert) een cijfer toekennen, kunnen we een gemiddelde score berekenen:
+
+- "Helemaal niet akkoord" krijgt een score van 1
+- "Niet akkoord" krijgt een score van 2
+- "Neutraal" krijgt een score van 3
+- "Akkoord" krijgt een score van 4
+- "Helemaal akkoord" krijgt een score van 5
+
+```{r kpi1, fig.cap = "Verdeling van de scores per lesonderdeel en algemeen. Het blauwe punt toont de mediaan. De rode driehoek toont het gemiddelde."}
+data_num <- data %>%
+  dplyr::select(starts_with("eval")) %>%
+  pivot_longer(cols = starts_with("eval")) %>%
+  mutate(categorie = rep(c(rep("inhoud", 3),
+                       rep("lesgeven", 3),
+                       rep("relevantie", 3)), nrow(data))) %>%
+  mutate(value_num =
+           as.numeric(factor(as.factor(value),
+                             levels = c("Helemaal niet akkoord", "Niet akkoord",
+                                        "Neutraal", "Akkoord",
+                                        "Helemaal akkoord"),
+                             ordered = TRUE)))
+data_num %>%
+  rbind(data_num %>%
+          mutate(categorie = "algemeen")) %>%
+  ggplot(aes(x = value_num, y = as.factor(categorie))) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = "point", shape = 2, size = 2, color = "red",
+               fill = "red") +
+  stat_summary(fun = median, geom = "point", shape = 20, size = 5,
+               color = "blue", fill = "blue") +
+  ylab("") +
+  xlab("score")
+```
+
+Voor de verwerking van de (ordinale) scores gebruiken we twee maten.
+De gemiddelde scores gebruiken we als een globale synthese. Het streefdoel is een **gemiddelde** van 4 op 5.
+Daarnaast bekijken we meer in detail de verdeling over de klassen 1-2 (slecht), 3 (middelmatig) en 4-5 (goed).
+Het streefdoel is de **proportie slecht (1-2)** onder de 10% te houden.
+
+De gemiddelde, algemene score is `r round(mean(data_num$value_num), 2)` en het percentage lage scores (1 of 2) is `r round(mean(data_num$value_num %in% c(1, 2))*100, 2)`%.
+Deze les voldoet dus ruim aan deze kwaliteitseisen.
+De vragen die een lagere score kregen waren
+"`r header[header$short == "eval_toepasbaar", "full"] %>% str_remove("Hoe evalueer je de les Bayesiaanse statistiek\\? \\[") %>% str_remove("\\]")`" (1 keer "Helemaal niet akkoord" en 3 keer "Niet akkoord") en "`r header[header$short == "eval_verwacht", "full"] %>% str_remove("Hoe evalueer je de les Bayesiaanse statistiek\\? \\[") %>% str_remove("\\]")`" (1 keer "Niet akkoord").
+
+
+# Conclusie
+Over het algemeen waren de mensen die de bevraging invulden tevreden over de les Bayesiaanse Statistiek. 

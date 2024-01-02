@@ -212,7 +212,7 @@ p(\lambda|X) = \frac{p(X|\lambda) * p(\lambda)}{p(X)}
 $$
 
 We vermeldden eerder reeds dat de noemer hier heel moeilijk is om te berekenen.
-Er zijn twee mogelijke oplossingen:
+Er zijn drie mogelijke oplossingen:
 
 - *Conjugate priors*: Voor sommige verdelingen en combinaties van priors en likelihoods is het mogelijk om toch een analytische oplossing te krijgen (zie [deze lijst](https://en.wikipedia.org/wiki/Conjugate_prior)). Dit beperkt echter onze mogelijkheden:
   - enkel mogelijk voor enkele univariate en bivariate problemen
@@ -587,7 +587,7 @@ Als oefening zullen we een model maken om het aantal soorten te vergelijken tuss
 
 ### Model specificatie
 
-We willen een model waarmee we het verschil kunnen onderzoeken in aantal soorten mieren tussen moeras- en boshabitats. Beschouw de responsvariabele $Y$, het aantal mieren, en $X_{habitat}$, een dummy variabele die gelijk is aan 0 voor moerassen en 1 voor bossen. We veronderstellen dat $Y$ een Normaal verdeling volgt (equivalent aan een lineaire regressie met categorische variabele (= ANOVA))
+We willen een model waarmee we het verschil kunnen onderzoeken in aantal soorten mieren tussen moeras- en boshabitats. Beschouw de responsvariabele $Y$, het aantal mieren, en $X_{habitat}$, een dummy variabele die gelijk is aan 0 voor moerassen en 1 voor bossen. We veronderstellen dat $Y$ een Normaal verdeling volgt (equivalent aan een lineaire regressie met categorische variabele (= ANOVA)).
 
 $$
 Y \sim N(\mu, \sigma^2)
