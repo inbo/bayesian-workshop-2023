@@ -1187,7 +1187,7 @@ We see that this indeed produces almost exactly the same results. Our Bayesian m
 
 - Stan User Guide [(link)](https://mc-stan.org/docs/2_18/stan-users-guide/index.html).
 - Brms documentation [(link)](https://mc-stan.org/users/interfaces/brms).
-- Ben Lambert has a  [youtube channem](https://www.youtube.com/channel/UC3tFZR3eL1bDY8CqZDOQh-w) with a student's guide to Bayesian statistics, a [short course](https://ben-lambert.com/biology/) and [detailed slides](https://ben-lambert.com/bayesian-lecture-slides/) on Bayesian statistics.
+- Ben Lambert has a  [youtube channel](https://www.youtube.com/channel/UC3tFZR3eL1bDY8CqZDOQh-w) with a student's guide to Bayesian statistics, a [short course](https://ben-lambert.com/biology/) and [detailed slides](https://ben-lambert.com/bayesian-lecture-slides/) on Bayesian statistics.
 - rstanarm vignettes [(link)](https://mc-stan.org/rstanarm/articles/)
 - some more useful packages that can work with brms objects
   - **posterior** useful tools for fitting Bayesian models or working with Bayesian model output  [(link)](https://mc-stan.org/posterior/)
